@@ -2,7 +2,7 @@
 import path from "node:path";
 
 // project imports
-import TaskService from "../../buisness/services/taskService.js";
+import TaskService from "../../domain/services/taskService.js";
 
 export default class TaskController {
     constructor() {

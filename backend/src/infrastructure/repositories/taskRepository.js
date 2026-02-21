@@ -1,6 +1,6 @@
 // project imports
 import db from "../databases/postgres.js";
-import TaskData from "../../buisness/models/taskdataModel.js";
+import TaskData from "../../domain/models/taskdataModel.js";
 
 export default class TaskRepository {
 
