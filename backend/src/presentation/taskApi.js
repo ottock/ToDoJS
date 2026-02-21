@@ -3,7 +3,7 @@ import cors from "cors";
 import express from "express";
 
 // project imports
-import apiRoutes from "../../presentation/routes/taskRoutes.js";
+import apiRoutes from "./routes/taskRoutes.js";
 
 export default class TaskApi {
     constructor(api_port, cors_origin) {
