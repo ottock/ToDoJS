@@ -4,11 +4,24 @@ import TaskData from "../../domain/models/taskdataModel.js";
 
 export default class TaskRepository {
 
-    async create({ name, priority, description, status }) {
-        const task = new TaskData(null, name, priority, description, status);
-        return db.queryFromFile(
+    async create(task) {
+        const rows = await db.queryFromFile(
             "backend/src/infrastructure/databases/queries/crud/createTask.sql",
             [task.name, task.priority, task.description, task.status]
+        );
+
+        if (!rows || rows.length === 0) {
+            return null;
+        }
+
+        const row = rows[0];
+
+        return new TaskData(
+            row.id,
+            row.name,
+            row.priority,
+            row.description,
+            row.status
         );
     }
 
@@ -33,24 +46,61 @@ export default class TaskRepository {
         );
     }
 
-    async update(id, { name, priority, description, status }) {
-        const task = new TaskData(id, name, priority, description, status);
-        return db.queryFromFile(
+    async update(task) {
+        const rows = await db.queryFromFile(
             "backend/src/infrastructure/databases/queries/crud/updateTask.sql",
             [task.id, task.name, task.priority, task.description, task.status]
+        );
+
+        if (!rows || rows.length === 0) {
+            return null;
+        }
+
+        const row = rows[0];
+
+        return new TaskData(
+            row.id,
+            row.name,
+            row.priority,
+            row.description,
+            row.status
         );
     }
 
     async delete(id) {
-        return db.queryFromFile(
+        const rows = await db.queryFromFile(
             "backend/src/infrastructure/databases/queries/crud/deleteTask.sql",
             [id]
         );
+
+        if (!rows || rows.length === 0) {
+            return null;
+        }
+
+        const row = rows[0];
+
+        return new TaskData(
+            row.id,
+            row.name,
+            row.priority,
+            row.description,
+            row.status
+        );
     }
 
-    readAll() {
-        return db.queryFromFile(
+    async readAll() {
+        const rows = await db.queryFromFile(
             "backend/src/infrastructure/databases/queries/allTasks.sql"
+        );
+
+        return rows.map(row =>
+            new TaskData(
+                row.id,
+                row.name,
+                row.priority,
+                row.description,
+                row.status
+            )
         );
     }
 }

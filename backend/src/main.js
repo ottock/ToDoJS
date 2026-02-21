@@ -1,17 +1,28 @@
 // project imports
-import credentials from "./core/credentials.js";
-import TaskApi from "./presentation/taskApi.js";
+import credentials from "./utils/credentials.js";
+import TaskApi from "./presentation/api/taskApi.js";
+import TaskRepository from "./infrastructure/repositories/taskRepository.js";
+import TaskService from "./domain/services/taskService.js";
 
 // constants
 const config = credentials();
 
 async function bootstrap() {
-    const backend_api = new TaskApi(
+
+    // Infrastructure
+    const taskRepository = new TaskRepository();
+
+    // Domain
+    const taskService = new TaskService(taskRepository);
+
+    // Presentation
+    const backendApi = new TaskApi(
         config.BACKEND_PORT,
-        config.FRONTEND_CORS
+        config.FRONTEND_CORS,
+        taskService
     );
 
-    backend_api.running();
+    backendApi.running();
 }
 
 bootstrap().catch(error => {

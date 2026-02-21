@@ -6,4 +6,5 @@ SET
     description = $4,
     status = $5
 WHERE
-    id = $1;
+    id = $1
+RETURNING id, name, priority, description, status;

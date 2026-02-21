@@ -1,12 +1,9 @@
 // imports
 import path from "node:path";
 
-// project imports
-import TaskService from "../../domain/services/taskService.js";
-
 export default class TaskController {
-    constructor() {
-        this.service = new TaskService();
+    constructor(taskService) {
+        this.service = taskService;
     }
 
     async status(req, res, next) {

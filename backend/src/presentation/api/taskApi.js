@@ -3,12 +3,13 @@ import cors from "cors";
 import express from "express";
 
 // project imports
-import apiRoutes from "./routes/taskRoutes.js";
+import apiRoutes from "../routes/taskRoutes.js";
 
 export default class TaskApi {
-    constructor(api_port, cors_origin) {
+    constructor(api_port, cors_origin, taskService) {
         this.api_port = api_port;
         this.cors_origin = cors_origin;
+        this.taskService = taskService;
         this.app = express();
     }
 
@@ -17,7 +18,7 @@ export default class TaskApi {
         this.app.use(cors({
             origin: this.cors_origin
         }));
-        this.app.use('/tasks', apiRoutes());
+        this.app.use('/tasks', apiRoutes(this.taskService));
 
         // 404 handler
         this.app.use((req, res) => {

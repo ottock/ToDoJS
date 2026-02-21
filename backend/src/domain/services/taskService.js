@@ -1,13 +1,25 @@
 // project imports
-import TaskRepository from "../../infrastructure/repositories/taskRepository.js";
+import TaskData from "../models/taskdataModel.js";
 
 export default class TaskService {
-    constructor() {
-        this.repository = new TaskRepository();
+    constructor(taskRepository) {
+        this.repository = taskRepository;
     }
 
     async createTask(data) {
-        return this.repository.create(data);
+        if (!data.name) {
+            throw new Error("Task must have a name");
+        }
+
+        const task = new TaskData(
+            null,
+            data.name,
+            data.priority,
+            data.description,
+            data.status
+        );
+
+        return this.repository.create(task);
     }
 
     async readTask(id) {
@@ -15,7 +27,19 @@ export default class TaskService {
     }
 
     async updateTask(id, data) {
-        return this.repository.update(id, data);
+        if (!data.name) {
+            throw new Error("Task must have a name");
+        }
+
+        const task = new TaskData(
+            id,
+            data.name,
+            data.priority,
+            data.description,
+            data.status
+        );
+
+        return this.repository.update(task);
     }
 
     async deleteTask(id) {

@@ -4,9 +4,9 @@ import { Router } from "express";
 // project imports
 import TaskController from "../controllers/taskController.js";
 
-export default function taskRoutes() {
+export default function taskRoutes(taskService) {
     const router = Router();
-    const controller = new TaskController();
+    const controller = new TaskController(taskService);
 
     router.get('/', controller.status.bind(controller));
     router.get("/status", controller.status.bind(controller));
