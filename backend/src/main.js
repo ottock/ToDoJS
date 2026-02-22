@@ -1,8 +1,8 @@
 // project imports
 import credentials from "./utils/credentials.js";
 import TaskApi from "./presentation/api/taskApi.js";
-import TaskRepository from "./infrastructure/repositories/taskRepository.js";
 import TaskService from "./domain/services/taskService.js";
+import TaskRepository from "./infrastructure/repositories/taskRepository.js";
 
 // constants
 const config = credentials();
