@@ -587,7 +587,13 @@ export default function Home() {
         onHide={() => setCreateVisible(false)}
         style={{ width: "400px" }}
       >
-        <div className="flex flex-column gap-3">
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "0.75rem",
+          }}
+        >
           <InputText
             value={createForm.name}
             onChange={(e) =>
