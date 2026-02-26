@@ -480,8 +480,18 @@ export default function Home() {
             gap: "1rem",
             overflowX: "auto",
             width: "100%",
+            overflowY: "hidden",
+            paddingBottom: "0.5rem",
+            scrollBehavior: "smooth",
           }}
         >
+          <style>{`
+            @media (max-width: 1024px) {
+              div[style*="overflowX"] {
+                flex-wrap: nowrap !important;
+              }
+            }
+          `}</style>
           <KanbanColumn
             title="A Fazer"
             tasks={todo}
