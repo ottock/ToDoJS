@@ -201,6 +201,14 @@ function KanbanColumn({
         flexDirection: "column",
       }}
     >
+      <style>{`
+        @media (max-width: 768px) {
+          div[style*='minWidth: "520px"'] {
+            minWidth: 100% !important;
+            minHeight: auto !important;
+          }
+        }
+      `}</style>
       <div
         className="flex align-items-center mb-2"
         style={{ gap: "0.75rem" }}
@@ -446,6 +454,23 @@ export default function Home() {
     <div className="min-h-screen p-4 surface-section">
       <Toast ref={toast} />
 
+      <style>{`
+        @media (max-width: 768px) {
+          .kanban-container {
+            flex-direction: column !important;
+          }
+          .kanban-container > div {
+            width: 100% !important;
+          }
+        }
+        
+        @media (orientation: portrait) and (max-width: 1024px) {
+          .kanban-container {
+            flex-direction: column !important;
+          }
+        }
+      `}</style>
+
       <div
         style={{
           display: "flex",
@@ -474,24 +499,18 @@ export default function Home() {
         <div>{error}</div>
       ) : (
         <div
+          className="kanban-container"
           style={{
             display: "flex",
             justifyContent: "center",
             gap: "1rem",
             overflowX: "auto",
-            width: "100%",
             overflowY: "hidden",
+            width: "100%",
             paddingBottom: "0.5rem",
             scrollBehavior: "smooth",
           }}
         >
-          <style>{`
-            @media (max-width: 1024px) {
-              div[style*="overflowX"] {
-                flex-wrap: nowrap !important;
-              }
-            }
-          `}</style>
           <KanbanColumn
             title="A Fazer"
             tasks={todo}
