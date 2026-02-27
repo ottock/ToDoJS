@@ -362,7 +362,11 @@ export default function Home() {
     async function fetchTasks() {
       try {
         const data = await consumer.readAllTasks();
-        setTasks(Array.isArray(data) ? data : []);
+        // Ordenar tasks por ordem
+        const sortedData = Array.isArray(data) 
+          ? data.sort((a, b) => (a.order || 0) - (b.order || 0))
+          : [];
+        setTasks(sortedData);
       } catch {
         setError("Error loading tasks.");
       } finally {
@@ -406,7 +410,20 @@ export default function Home() {
         const [moved] = updatedColumn.splice(fromIndex, 1);
         updatedColumn.splice(toIndex, 0, moved);
 
-        return [...others, ...updatedColumn];
+        // Atualizar ordem de todas as tasks da coluna
+        const updatedWithOrder = updatedColumn.map((task, index) => ({
+          ...task,
+          order: index,
+        }));
+
+        // Salvar ordem no backend
+        Promise.all(
+          updatedWithOrder.map((task) =>
+            consumer.updateTask(task.id, task)
+          )
+        );
+
+        return [...others, ...updatedWithOrder];
       });
       return;
     }
@@ -414,12 +431,25 @@ export default function Home() {
     // Move between columns (change status)
     if (source.status === status) return;
 
-    const updated = { ...source, status };
-    setTasks((prev) =>
-      prev.map((t) => (t.id === source.id ? updated : t))
-    );
+    // Atualizar status e recalcular ordem
+    setTasks((prev) => {
+      const updated = { ...source, status };
+      const newTasks = prev.map((t) => (t.id === source.id ? updated : t));
+      
+      // Reorganizar ordem na coluna de destino
+      const inDestColumn = newTasks.filter((t) => t.status === status);
+      const others = newTasks.filter((t) => t.status !== status);
+      
+      const updatedWithOrder = inDestColumn.map((task, index) => ({
+        ...task,
+        order: index,
+      }));
 
-    await consumer.updateTask(source.id, updated);
+      // Salvar no backend
+      consumer.updateTask(source.id, { ...updated, order: updatedWithOrder.length - 1 });
+
+      return [...others, ...updatedWithOrder];
+    });
   };
 
   /* =========================
