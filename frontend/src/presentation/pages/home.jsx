@@ -19,9 +19,9 @@ import TaskConsumer from "../../infrastructure/repository/taskConsumer";
 ========================= */
 
 const PRIORITY_CONFIG = {
-  H: { label: "Alta", severity: "danger", icon: "pi pi-angle-double-up" },
-  M: { label: "Média", severity: "warning", icon: "pi pi-angle-up" },
-  L: { label: "Baixa", severity: "success", icon: "pi pi-angle-down" },
+  H: { label: "High", severity: "danger", icon: "pi pi-angle-double-up" },
+  M: { label: "Medium", severity: "warning", icon: "pi pi-angle-up" },
+  L: { label: "Low", severity: "success", icon: "pi pi-angle-down" },
 };
 
 const PRIORITY_OPTIONS = Object.entries(PRIORITY_CONFIG).map(([key, val]) => ({
@@ -29,6 +29,13 @@ const PRIORITY_OPTIONS = Object.entries(PRIORITY_CONFIG).map(([key, val]) => ({
   value: key,
   icon: val.icon,
 }));
+
+const FILTER_OPTIONS = [
+  { label: "All Priorities", value: ["H", "M", "L"] },
+  { label: "High", value: "H" },
+  { label: "Medium", value: "M" },
+  { label: "Low", value: "L" },
+];
 
 // Theme asset URLs resolved by Vite
 const LIGHT_THEME_HREF = new URL(
@@ -55,7 +62,7 @@ function PriorityTemplate(option) {
    TASK CARD
 ========================= */
 
-function TaskCard({ task, onEdit, onDelete, onDragStart, onDrop }) {
+function TaskCard({ task, onEdit, onDelete, onDragStart, onDrop, isDragging }) {
   const priority = PRIORITY_CONFIG[task.priority] ?? PRIORITY_CONFIG.M;
   const [hover, setHover] = useState(false);
 
@@ -67,13 +74,16 @@ function TaskCard({ task, onEdit, onDelete, onDragStart, onDrop }) {
       style={{
         cursor: "grab",
         borderRadius: "12px",
-        boxShadow: hover
-          ? "0 10px 22px rgba(0,0,0,0.18)"
-          : "0 6px 18px rgba(0,0,0,0.12)",
+        boxShadow: "none",
         background: "var(--surface-card)",
-        borderColor: "var(--surface-border)",
-        transition: "transform 0.15s ease, box-shadow 0.15s ease",
-        transform: hover ? "translateY(-2px)" : "translateY(0)",
+        border: `2px dashed var(--surface-border)`,
+        transition: "transform 0.15s ease, opacity 0.15s ease, border-color 0.15s ease",
+        transform: isDragging 
+          ? "scale(0.90) rotate(2deg)" 
+          : hover 
+          ? "translateY(-2px)" 
+          : "translateY(0)",
+        opacity: isDragging ? 0.7 : 1,
         padding: "0.75rem 1.1rem 1rem 1.1rem",
       }}
       onMouseEnter={() => setHover(true)}
@@ -177,8 +187,17 @@ function KanbanColumn({
   onDragStart,
   showCreateButton = false,
   onCreate,
+  priorityFilter,
+  onPriorityFilterChange,
+  draggedTaskId,
 }) {
   const [dragOver, setDragOver] = useState(false);
+
+  const filteredTasks = priorityFilter
+    ? Array.isArray(priorityFilter)
+      ? tasks.filter((t) => priorityFilter.includes(t.priority))
+      : tasks.filter((t) => t.priority === priorityFilter)
+    : tasks;
 
   return (
     <div
@@ -191,71 +210,89 @@ function KanbanColumn({
         setDragOver(false);
         onDrop(e, columnStatus);
       }}
-      className={`surface-card border-round-xl border-1 p-3 ${
+      className={`surface-card border-round-xl ${
         dragOver ? "border-primary" : "surface-border"
       }`}
       style={{
-        minWidth: "520px",
-        minHeight: "520px",
+        minWidth: "600px",
+        minHeight: "700px",
         display: "flex",
         flexDirection: "column",
+        transition: "background-color 0.2s ease, border-color 0.2s ease",
+        backgroundColor: dragOver ? "rgba(var(--primary-500), 0.05)" : "var(--surface-card)",
+        border: `2px solid ${dragOver ? "var(--primary-color)" : "var(--surface-border)"}`,
+        borderRadius: "16px",
+        padding: "1.5rem",
       }}
     >
       <style>{`
         @media (max-width: 768px) {
-          div[style*='minWidth: "520px"'] {
+          div[style*='minWidth: "600px"'] {
             minWidth: 100% !important;
             minHeight: auto !important;
           }
         }
       `}</style>
       <div
-        className="flex align-items-center mb-2"
+        className="flex align-items-center mb-3"
         style={{ gap: "0.75rem" }}
       >
         <Badge
-          value={tasks.length}
+          value={filteredTasks.length}
           severity={columnStatus ? "success" : "danger"}
           style={{ borderRadius: "999px", minWidth: "2rem" }}
         />
-        <span className="font-bold">{title}</span>
+        <span className="font-bold text-lg">{title}</span>
       </div>
 
-      <Divider />
+      <Divider style={{ margin: "0.5rem 0 1rem 0" }} />
+
+      {showCreateButton && (
+        <Button
+          label="New Task"
+          icon="pi pi-plus"
+          onClick={onCreate}
+          style={{ alignSelf: "stretch", marginBottom: "1rem" }}
+        />
+      )}
+
+      <div style={{ marginBottom: "1rem" }}>
+        <Dropdown
+          value={priorityFilter}
+          options={FILTER_OPTIONS}
+          onChange={(e) => onPriorityFilterChange(e.value)}
+          placeholder="Filter by priority"
+          showClear
+          style={{ width: "100%" }}
+        />
+      </div>
 
       <div
         style={{
           display: "flex",
           flexDirection: "column",
           gap: "1rem",
+          flex: 1,
+          overflowY: "auto",
         }}
       >
-        {tasks.length === 0 ? (
-          <div className="flex flex-column align-items-center justify-content-center py-4 text-500">
-            <i className="pi pi-inbox text-3xl mb-2" />
-            <span>Arraste tarefas para cá</span>
+        {filteredTasks.length === 0 ? (
+          <div className="flex flex-column align-items-center justify-content-center py-6 text-500">
+            <i className="pi pi-inbox text-4xl mb-3" />
+            <span>Drag tasks here</span>
           </div>
         ) : (
-          tasks.map((task) => (
+          filteredTasks.map((task) => (
             <TaskCard
               key={task.id}
               task={task}
+              isDragging={draggedTaskId === task.id}
               onEdit={onEdit}
               onDelete={onDelete}
               onDragStart={onDragStart}
               onDrop={onDrop ? (e) => onDrop(e, columnStatus, task.id) : undefined}
             />
           ))
-        )}
-
-        {showCreateButton && (
-          <Button
-            label="Nova Tarefa"
-            icon="pi pi-plus"
-            size="small"
-            onClick={onCreate}
-            style={{ alignSelf: "stretch" }}
-          />
         )}
       </div>
     </div>
@@ -288,7 +325,11 @@ export default function Home() {
     priority: "M",
   });
 
+  const [todoFilter, setTodoFilter] = useState(["H", "M", "L"]);
+  const [doneFilter, setDoneFilter] = useState(["H", "M", "L"]);
+
   const dragTask = useRef(null);
+  const [draggedTaskId, setDraggedTaskId] = useState(null);
   const toast = useRef(null);
 
   const apiUrl = useMemo(
@@ -323,7 +364,7 @@ export default function Home() {
         const data = await consumer.readAllTasks();
         setTasks(Array.isArray(data) ? data : []);
       } catch {
-        setError("Erro ao carregar tarefas.");
+        setError("Error loading tasks.");
       } finally {
         setLoading(false);
       }
@@ -337,11 +378,14 @@ export default function Home() {
 
   const handleDragStart = (e, task) => {
     dragTask.current = task;
+    setDraggedTaskId(task.id);
     e.dataTransfer.effectAllowed = "move";
   };
 
   const handleDrop = async (e, status, targetId) => {
     e.preventDefault();
+    setDraggedTaskId(null);
+    
     if (!dragTask.current) return;
 
     const source = dragTask.current;
@@ -392,7 +436,7 @@ export default function Home() {
     if (!editForm.name.trim()) {
       toast.current.show({
         severity: "warn",
-        summary: "Nome obrigatório",
+        summary: "Name is required",
       });
       return;
     }
@@ -428,7 +472,7 @@ export default function Home() {
     if (!createForm.name.trim()) {
       toast.current?.show({
         severity: "warn",
-        summary: "Nome obrigatório",
+        summary: "Name is required",
       });
       return;
     }
@@ -484,7 +528,7 @@ export default function Home() {
         </div>
         <Button
           icon={isDark ? "pi pi-moon" : "pi pi-sun"}
-          label={isDark ? "Tema Escuro" : "Tema Claro"}
+          label={isDark ? "Dark Theme" : "Light Theme"}
           size="small"
           text
           onClick={() => setIsDark((v) => !v)}
@@ -512,7 +556,7 @@ export default function Home() {
           }}
         >
           <KanbanColumn
-            title="A Fazer"
+            title="To Do"
             tasks={todo}
             columnStatus={false}
             onEdit={openEdit}
@@ -521,21 +565,27 @@ export default function Home() {
             onDragStart={handleDragStart}
             showCreateButton
             onCreate={openCreate}
+            priorityFilter={todoFilter}
+            onPriorityFilterChange={setTodoFilter}
+            draggedTaskId={draggedTaskId}
           />
           <KanbanColumn
-            title="Concluídas"
+            title="Completed"
             tasks={done}
             columnStatus={true}
             onEdit={openEdit}
             onDelete={handleDelete}
             onDrop={handleDrop}
             onDragStart={handleDragStart}
+            priorityFilter={doneFilter}
+            onPriorityFilterChange={setDoneFilter}
+            draggedTaskId={draggedTaskId}
           />
         </div>
       )}
 
       <Dialog
-        header="Editar Tarefa"
+        header="Edit Task"
         visible={editVisible}
         onHide={() => setEditVisible(false)}
         style={{ width: "400px" }}
@@ -552,7 +602,7 @@ export default function Home() {
             onChange={(e) =>
               setEditForm({ ...editForm, name: e.target.value })
             }
-            placeholder="Nome"
+            placeholder="Name"
           />
           <InputTextarea
             value={editForm.description}
@@ -563,7 +613,7 @@ export default function Home() {
               })
             }
             rows={3}
-            placeholder="Descrição"
+            placeholder="Description"
           />
           <Dropdown
             value={editForm.priority}
@@ -577,12 +627,12 @@ export default function Home() {
             itemTemplate={PriorityTemplate}
             valueTemplate={PriorityTemplate}
           />
-          <Button label="Salvar" onClick={handleSave} />
+          <Button label="Save" onClick={handleSave} />
         </div>
       </Dialog>
 
       <Dialog
-        header="Nova Tarefa"
+        header="New Task"
         visible={createVisible}
         onHide={() => setCreateVisible(false)}
         style={{ width: "400px" }}
@@ -599,7 +649,7 @@ export default function Home() {
             onChange={(e) =>
               setCreateForm({ ...createForm, name: e.target.value })
             }
-            placeholder="Nome"
+            placeholder="Name"
           />
           <InputTextarea
             value={createForm.description}
@@ -610,7 +660,7 @@ export default function Home() {
               })
             }
             rows={3}
-            placeholder="Descrição"
+            placeholder="Description"
           />
           <Dropdown
             value={createForm.priority}
@@ -624,7 +674,7 @@ export default function Home() {
             itemTemplate={PriorityTemplate}
             valueTemplate={PriorityTemplate}
           />
-          <Button label="Criar" onClick={handleCreate} />
+          <Button label="Create" onClick={handleCreate} />
         </div>
       </Dialog>
     </div>
