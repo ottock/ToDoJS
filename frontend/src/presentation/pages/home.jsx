@@ -308,7 +308,11 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const [isDark, setIsDark] = useState(false);
+  // Carregar tema do localStorage
+  const [isDark, setIsDark] = useState(() => {
+    const savedTheme = localStorage.getItem('theme');
+    return savedTheme === 'dark';
+  });
 
   const [editVisible, setEditVisible] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
@@ -352,6 +356,9 @@ export default function Home() {
       document.head.appendChild(link);
     }
     link.href = isDark ? DARK_THEME_HREF : LIGHT_THEME_HREF;
+    
+    // Salvar tema no localStorage
+    localStorage.setItem('theme', isDark ? 'dark' : 'light');
   }, [isDark]);
 
   /* =========================
