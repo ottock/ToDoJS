@@ -187,6 +187,8 @@ function KanbanColumn({
   onDragStart,
   showCreateButton = false,
   onCreate,
+  showClearButton = false,
+  onClear,
   priorityFilter,
   onPriorityFilterChange,
   draggedTaskId,
@@ -235,14 +237,19 @@ function KanbanColumn({
       `}</style>
       <div
         className="flex align-items-center mb-3"
-        style={{ gap: "0.75rem" }}
+        style={{ gap: "1.25rem" }}
       >
         <Badge
           value={filteredTasks.length}
           severity={columnStatus ? "success" : "danger"}
-          style={{ borderRadius: "999px", minWidth: "2rem" }}
+          style={{ borderRadius: "999px", minWidth: "2rem", marginRight: "0.25rem" }}
         />
-        <span className="font-bold text-lg">{title}</span>
+        <span
+          className="text-lg"
+          style={{ fontWeight: 800, marginLeft: "0.25rem" }}
+        >
+          {title}
+        </span>
       </div>
 
       <Divider style={{ margin: "0.5rem 0 1rem 0" }} />
@@ -251,7 +258,20 @@ function KanbanColumn({
         <Button
           label="New Task"
           icon="pi pi-plus"
+          severity="success"
+          outlined
           onClick={onCreate}
+          style={{ alignSelf: "stretch", marginBottom: "1rem" }}
+        />
+      )}
+
+      {showClearButton && (
+        <Button
+          label="Clear Completed"
+          icon="pi pi-trash"
+          severity="danger"
+          outlined
+          onClick={onClear}
           style={{ alignSelf: "stretch", marginBottom: "1rem" }}
         />
       )}
@@ -277,9 +297,23 @@ function KanbanColumn({
         }}
       >
         {filteredTasks.length === 0 ? (
-          <div className="flex flex-column align-items-center justify-content-center py-6 text-500">
-            <i className="pi pi-inbox text-4xl mb-3" />
-            <span>Drag tasks here</span>
+          <div
+            className="flex flex-column align-items-center justify-content-center py-6 text-500"
+            style={{
+              flex: 1,
+              width: "100%",
+              textAlign: "center",
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+          >
+            <i
+              className="pi pi-inbox text-4xl"
+              style={{ display: "block", marginBottom: "0.75rem" }}
+            />
+            <span style={{ display: "block", textAlign: "center" }}>
+              Drag tasks here
+            </span>
           </div>
         ) : (
           filteredTasks.map((task) => (
@@ -524,6 +558,26 @@ export default function Home() {
     setCreateVisible(false);
   };
 
+  const handleClearCompleted = async () => {
+    const completedTasks = tasks.filter((t) => t.status);
+
+    if (completedTasks.length === 0) {
+      toast.current?.show({
+        severity: "info",
+        summary: "No completed tasks to clear",
+      });
+      return;
+    }
+
+    await Promise.all(completedTasks.map((task) => consumer.deleteTask(task.id)));
+    setTasks((prev) => prev.filter((t) => !t.status));
+
+    toast.current?.show({
+      severity: "success",
+      summary: "Completed tasks cleared",
+    });
+  };
+
   const todo = tasks.filter((t) => !t.status);
   const done = tasks.filter((t) => t.status);
 
@@ -614,6 +668,8 @@ export default function Home() {
             onDelete={handleDelete}
             onDrop={handleDrop}
             onDragStart={handleDragStart}
+            showClearButton
+            onClear={handleClearCompleted}
             priorityFilter={doneFilter}
             onPriorityFilterChange={setDoneFilter}
             draggedTaskId={draggedTaskId}
