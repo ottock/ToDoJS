@@ -147,7 +147,10 @@ function TaskCard({ task, onEdit, onDelete, onDragStart, onDrop, isDragging }) {
       />
 
       {task.description && (
-        <p className="text-sm m-0 mb-3" style={{ lineHeight: 1.5 }}>
+        <p
+          className="text-sm m-0 mb-3"
+          style={{ lineHeight: 1.5, whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}
+        >
           {task.description}
         </p>
       )}
@@ -216,7 +219,10 @@ function KanbanColumn({
         dragOver ? "border-primary" : "surface-border"
       }`}
       style={{
+        width: "600px",
         minWidth: "600px",
+        maxWidth: "600px",
+        flex: "0 0 600px",
         minHeight: "700px",
         display: "flex",
         flexDirection: "column",
@@ -227,14 +233,6 @@ function KanbanColumn({
         padding: "1.5rem",
       }}
     >
-      <style>{`
-        @media (max-width: 768px) {
-          div[style*='minWidth: "600px"'] {
-            minWidth: 100% !important;
-            minHeight: auto !important;
-          }
-        }
-      `}</style>
       <div
         className="flex align-items-center mb-3"
         style={{ gap: "1.25rem" }}
@@ -360,7 +358,7 @@ export default function Home() {
   const [createForm, setCreateForm] = useState({
     name: "",
     description: "",
-    priority: "M",
+    priority: "L",
   });
 
   const [todoFilter, setTodoFilter] = useState(["H", "M", "L"]);
@@ -535,7 +533,7 @@ export default function Home() {
   ========================= */
 
   const openCreate = () => {
-    setCreateForm({ name: "", description: "", priority: "M" });
+    setCreateForm({ name: "", description: "", priority: "L" });
     setCreateVisible(true);
   };
 
@@ -550,6 +548,7 @@ export default function Home() {
 
     const payload = {
       ...createForm,
+      priority: createForm.priority || "L",
       status: false,
     };
 
@@ -589,23 +588,6 @@ export default function Home() {
     <div className="min-h-screen p-4 surface-section">
       <Toast ref={toast} />
 
-      <style>{`
-        @media (max-width: 768px) {
-          .kanban-container {
-            flex-direction: column !important;
-          }
-          .kanban-container > div {
-            width: 100% !important;
-          }
-        }
-        
-        @media (orientation: portrait) and (max-width: 1024px) {
-          .kanban-container {
-            flex-direction: column !important;
-          }
-        }
-      `}</style>
-
       <div
         style={{
           display: "flex",
@@ -615,7 +597,7 @@ export default function Home() {
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-          <h2 style={{ margin: 0 }}>To Do JS</h2>
+          <h2 style={{ margin: 0 }}>ToDoJS</h2>
         </div>
         <Button
           icon={isDark ? "pi pi-moon" : "pi pi-sun"}
