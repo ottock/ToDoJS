@@ -12,7 +12,7 @@ import { Toast } from "primereact/toast";
 import { ProgressSpinner } from "primereact/progressspinner";
 
 // project imports
-import TaskConsumer from "../../infrastructure/repository/taskConsumer";
+import TaskConsumer from "../../infrastructure/repository/task_consumer";
 
 /* =========================
    PRIORITY CONFIG
