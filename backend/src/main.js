@@ -1,7 +1,7 @@
 // project imports
-import credentials from "./utils/credentials.js";
+import credentials from "./core/utils/credentials.js";
 import TaskApi from "./presentation/api/taskApi.js";
-import TaskService from "./domain/services/taskService.js";
+import TaskService from "./application/services/taskService.js";
 import TaskRepository from "./infrastructure/repositories/taskRepository.js";
 
 // constants
@@ -12,7 +12,7 @@ async function bootstrap() {
     // Infrastructure
     const taskRepository = new TaskRepository();
 
-    // Domain
+    // Application
     const taskService = new TaskService(taskRepository);
 
     // Presentation

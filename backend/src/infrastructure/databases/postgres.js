@@ -3,7 +3,7 @@ import pkg from "pg";
 import { readFile } from "fs/promises";
 
 // project imports
-import credentials from "../../utils/credentials.js";
+import credentials from "../../core/utils/credentials.js";
 
 // contants
 const { Pool } = pkg;

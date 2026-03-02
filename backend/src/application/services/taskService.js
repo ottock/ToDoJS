@@ -1,5 +1,5 @@
 // project imports
-import TaskData from "../models/taskdataModel.js";
+import TaskData from "../../domain/models/taskdataModel.js";
 
 export default class TaskService {
     constructor(taskRepository) {
