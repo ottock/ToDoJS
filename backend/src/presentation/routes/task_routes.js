@@ -2,7 +2,7 @@
 import { Router } from "express";
 
 // project imports
-import TaskController from "../controllers/taskController.js";
+import TaskController from "../controllers/task_controller.js";
 
 export default function taskRoutes(taskService) {
     const router = Router();
