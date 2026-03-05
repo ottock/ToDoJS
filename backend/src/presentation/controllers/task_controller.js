@@ -8,21 +8,7 @@ export default class TaskController {
 
     async status(req, res, next) {
         try {
-            const filePath = path.resolve(
-                "backend/src/presentation/assets/status/status.html"
-            );
-            return res.sendFile(filePath);
-        } catch (error) {
-            next(error);
-        }
-    }
-
-    async docs(req, res, next) {
-        try {
-            const filePath = path.resolve(
-                "backend/src/presentation/assets/docs/docs.html"
-            );
-            return res.sendFile(filePath);
+            return res.status(200).json({ message: "Success"});
         } catch (error) {
             next(error);
         }

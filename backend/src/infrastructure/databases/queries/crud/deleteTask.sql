@@ -1,3 +1,3 @@
 DELETE FROM tasks
 WHERE id = $1
-RETURNING id, name, priority, description, status;
+RETURNING id, name, created_date, priority, description, status;

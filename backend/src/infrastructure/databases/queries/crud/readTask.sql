@@ -1,6 +1,7 @@
 SELECT
     id,
     name,
+    created_date,
     priority,
     description,
     status

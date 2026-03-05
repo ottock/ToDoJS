@@ -9,8 +9,6 @@ export default function taskRoutes(taskService) {
     const controller = new TaskController(taskService);
 
     router.get('/', controller.status.bind(controller));
-    router.get("/status", controller.status.bind(controller));
-    router.get("/docs", controller.docs.bind(controller));
     router.get("/readAllTasks", controller.readAllTasks.bind(controller));
 
     // C.R.U.D routes

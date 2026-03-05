@@ -538,14 +538,6 @@ export default function Home() {
   };
 
   const handleCreate = async () => {
-    if (!createForm.name.trim()) {
-      toast.current?.show({
-        severity: "warn",
-        summary: "Name is required",
-      });
-      return;
-    }
-
     const payload = {
       ...createForm,
       priority: createForm.priority || "L",

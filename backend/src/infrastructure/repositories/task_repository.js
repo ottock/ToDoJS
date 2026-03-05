@@ -3,11 +3,10 @@ import db from "../databases/postgres.js";
 import TaskData from "../../domain/models/task_data_model.js";
 
 export default class TaskRepository {
-
     async create(task) {
         const rows = await db.queryFromFile(
             "backend/src/infrastructure/databases/queries/crud/createTask.sql",
-            [task.name, task.priority, task.description, task.status]
+            [task.name, task.created_date, task.priority, task.description, task.status]
         );
 
         if (!rows || rows.length === 0) {
@@ -19,6 +18,7 @@ export default class TaskRepository {
         return new TaskData(
             row.id,
             row.name,
+            row.created_date,
             row.priority,
             row.description,
             row.status
@@ -40,6 +40,7 @@ export default class TaskRepository {
         return new TaskData(
             row.id,
             row.name,
+            row.created_date,
             row.priority,
             row.description,
             row.status
@@ -61,6 +62,7 @@ export default class TaskRepository {
         return new TaskData(
             row.id,
             row.name,
+            row.created_date,
             row.priority,
             row.description,
             row.status
@@ -82,6 +84,7 @@ export default class TaskRepository {
         return new TaskData(
             row.id,
             row.name,
+            row.created_date,
             row.priority,
             row.description,
             row.status
@@ -93,14 +96,16 @@ export default class TaskRepository {
             "backend/src/infrastructure/databases/queries/allTasks.sql"
         );
 
-        return rows.map(row =>
-            new TaskData(
-                row.id,
-                row.name,
-                row.priority,
-                row.description,
-                row.status
-            )
+        return rows.map(
+            (row) =>
+                new TaskData(
+                    row.id,
+                    row.name,
+                    row.created_date,
+                    row.priority,
+                    row.description,
+                    row.status
+                )
         );
     }
 }

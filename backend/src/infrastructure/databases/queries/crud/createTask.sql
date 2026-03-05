@@ -1,3 +1,3 @@
-INSERT INTO tasks (name, priority, description, status)
-VALUES ($1, $2, $3, $4)
-RETURNING id, name, priority, description, status;
+INSERT INTO tasks (name, created_date, priority, description, status)
+VALUES ($1, $2, $3, $4, $5)
+RETURNING id, name, created_date, priority, description, status;

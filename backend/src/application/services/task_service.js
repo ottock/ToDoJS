@@ -7,16 +7,15 @@ export default class TaskService {
     }
 
     async createTask(data) {
-        if (!data.name) {
-            throw new Error("Task must have a name");
-        }
+        const payload = data ?? {};
 
         const task = new TaskData(
             null,
-            data.name,
-            data.priority,
-            data.description,
-            data.status
+            payload.name?.trim() ? payload.name.trim() : undefined,
+            payload.created_date?.trim() ? payload.created_date.trim() : undefined,
+            payload.priority?.trim() ? payload.priority.trim().toUpperCase() : undefined,
+            payload.description?.trim() ? payload.description.trim() : undefined,
+            typeof payload.status === "boolean" ? payload.status : undefined
         );
 
         return this.repository.create(task);
@@ -27,16 +26,13 @@ export default class TaskService {
     }
 
     async updateTask(id, data) {
-        if (!data.name) {
-            throw new Error("Task must have a name");
-        }
-
         const task = new TaskData(
             id,
             data.name,
+            data.created_date,
             data.priority,
             data.description,
-            data.status
+            data.status ?? false
         );
 
         return this.repository.update(task);
