@@ -257,6 +257,7 @@ function KanbanColumn({
   onPriorityFilterChange,
   draggedTaskId,
   loading = false,
+  isMobile = false,
 }) {
   const [dragOver, setDragOver] = useState(false);
 
@@ -295,10 +296,10 @@ function KanbanColumn({
         dragOver ? "border-primary" : "surface-border"
       }`}
       style={{
-        width: "600px",
-        minWidth: "600px",
+        width: isMobile ? "100%" : "600px",
+        minWidth: isMobile ? "100%" : "600px",
         maxWidth: "600px",
-        flex: "0 0 600px",
+        flex: isMobile ? "1 1 100%" : "0 0 600px",
         minHeight: `${columnHeight}px`,
         display: "flex",
         flexDirection: "column",
@@ -449,6 +450,11 @@ export default function Home() {
 
   const [todoFilter, setTodoFilter] = useState(["H", "M", "L"]);
   const [doneFilter, setDoneFilter] = useState(["H", "M", "L"]);
+  const [isMobile, setIsMobile] = useState(() =>
+    typeof window !== "undefined"
+      ? window.matchMedia("(max-width: 768px)").matches
+      : false
+  );
 
   const dragTask = useRef(null);
   const [draggedTaskId, setDraggedTaskId] = useState(null);
@@ -478,6 +484,18 @@ export default function Home() {
     // Salvar tema no localStorage
     localStorage.setItem('theme', isDark ? 'dark' : 'light');
   }, [isDark]);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(max-width: 768px)");
+    const updateViewport = () => setIsMobile(mediaQuery.matches);
+
+    updateViewport();
+    mediaQuery.addEventListener("change", updateViewport);
+
+    return () => {
+      mediaQuery.removeEventListener("change", updateViewport);
+    };
+  }, []);
 
   /* =========================
      LOAD TASKS
@@ -693,9 +711,11 @@ export default function Home() {
           className="kanban-container"
           style={{
             display: "flex",
+            flexDirection: isMobile ? "column" : "row",
+            alignItems: "center",
             justifyContent: "center",
             gap: "1rem",
-            overflowX: "auto",
+            overflowX: isMobile ? "hidden" : "auto",
             overflowY: "hidden",
             width: "100%",
             paddingBottom: "0.5rem",
@@ -716,6 +736,7 @@ export default function Home() {
             onPriorityFilterChange={setTodoFilter}
             draggedTaskId={draggedTaskId}
             loading={loading}
+            isMobile={isMobile}
           />
           <KanbanColumn
             title="Completed"
@@ -731,6 +752,7 @@ export default function Home() {
             onPriorityFilterChange={setDoneFilter}
             draggedTaskId={draggedTaskId}
             loading={loading}
+            isMobile={isMobile}
           />
         </div>
       )}
@@ -739,7 +761,7 @@ export default function Home() {
         header="Edit Task"
         visible={editVisible}
         onHide={() => setEditVisible(false)}
-        style={{ width: "400px" }}
+        style={{ width: "min(400px, 92vw)" }}
       >
         <div
           style={{
@@ -786,7 +808,7 @@ export default function Home() {
         header="New Task"
         visible={createVisible}
         onHide={() => setCreateVisible(false)}
-        style={{ width: "400px" }}
+        style={{ width: "min(400px, 92vw)" }}
       >
         <div
           style={{
