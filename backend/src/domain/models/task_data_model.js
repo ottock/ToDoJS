@@ -1,5 +1,5 @@
-// functions
-import today_date from "../../core/utils/timestamp.js";
+// project imports
+import { today_date, format_date } from "../../core/utils/timestamp.js";
 
 export default class TaskData {
     constructor(
@@ -31,7 +31,7 @@ export default class TaskData {
         return {
             id: this.id,
             name: this.name,
-            created_date: this.created_date,
+            created_date: format_date(this.created_date),
             priority: this.priority,
             description: this.description,
             status: this.status

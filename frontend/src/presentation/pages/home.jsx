@@ -9,7 +9,7 @@ import { Tag } from "primereact/tag";
 import { Badge } from "primereact/badge";
 import { Divider } from "primereact/divider";
 import { Toast } from "primereact/toast";
-import { ProgressSpinner } from "primereact/progressspinner";
+import { Skeleton } from "primereact/skeleton";
 
 // project imports
 import TaskConsumer from "../../infrastructure/repository/task_consumer";
@@ -62,9 +62,61 @@ function PriorityTemplate(option) {
    TASK CARD
 ========================= */
 
+function SkeletonTaskCard() {
+  return (
+    <div
+      className="surface-card border-round-lg border-1 surface-border p-3 mb-3"
+      style={{
+        borderRadius: "12px",
+        background: "var(--surface-card)",
+        border: `2px dashed var(--surface-border)`,
+        padding: "0.75rem 1.1rem 1rem 1.1rem",
+      }}
+    >
+      {/* Top row: Date, Priority, Menu */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.75rem" }}>
+        <Skeleton width="40%" height="0.9rem" />
+        <div style={{ display: "flex", gap: "0.25rem" }}>
+          <Skeleton width="80px" height="1.8rem" borderRadius="16px" />
+          <Skeleton width="30px" height="1.8rem" borderRadius="4px" />
+        </div>
+      </div>
+      {/* Title skeleton */}
+      <div style={{ marginBottom: "0.75rem" }}>
+        <Skeleton width="60%" height="1.5rem" />
+      </div>
+      <div
+        style={{
+          height: "3px",
+          borderRadius: "999px",
+          marginTop: "0.5rem",
+          marginBottom: "0.5rem",
+          background: "var(--primary-color)",
+          opacity: 0.3,
+        }}
+      />
+      <Skeleton width="100%" height="2rem" style={{ marginBottom: "0.5rem" }} />
+      <Skeleton width="85%" height="1rem" />
+    </div>
+  );
+}
+
 function TaskCard({ task, onEdit, onDelete, onDragStart, onDrop, isDragging }) {
   const priority = PRIORITY_CONFIG[task.priority] ?? PRIORITY_CONFIG.M;
   const [hover, setHover] = useState(false);
+
+  // Format date from YYYY-MM-DD to DD/MM/YY format
+  const formatDate = (dateString) => {
+    if (!dateString) return "";
+    // dateString comes as "YYYY-MM-DD" or similar format from backend
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return dateString; // If invalid, return original
+    return new Intl.DateTimeFormat("pt-BR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "2-digit",
+    }).format(date);
+  };
 
   return (
     <div
@@ -95,31 +147,21 @@ function TaskCard({ task, onEdit, onDelete, onDragStart, onDrop, isDragging }) {
         if (onDrop) onDrop(e);
       }}
     >
+      {/* Top row: Date, Priority, Menu */}
       <div
-        className="flex align-items-center mb-3"
-        style={{ position: "relative", paddingRight: "3.5rem" }}
+        style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.75rem", flexWrap: "nowrap" }}
       >
-        <span
-          className="font-semibold"
-          style={{
-            flex: 1,
-            whiteSpace: "nowrap",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-          }}
-        >
-          {task.name}
-        </span>
-        <div
-          style={{
-            position: "absolute",
-            right: 0,
-            top: 0,
-            display: "flex",
-            alignItems: "center",
-            gap: "0.25rem",
-          }}
-        >
+        {/* Date - left */}
+        <div style={{ fontSize: "0.75rem", color: "var(--text-color-secondary)", display: "flex", alignItems: "center", gap: "0.35rem", flexShrink: 0, whiteSpace: "nowrap" }}>
+          <i className="pi pi-calendar" style={{ fontSize: "0.7rem" }} />
+          <span>{formatDate(task.created_date)}</span>
+        </div>
+
+        {/* Spacer */}
+        <div style={{ flex: 1 }}></div>
+
+        {/* Priority and Menu - right */}
+        <div style={{ display: "flex", alignItems: "center", gap: "0.25rem", flexShrink: 0, whiteSpace: "nowrap" }}>
           <Tag
             severity={priority.severity}
             icon={priority.icon}
@@ -135,6 +177,25 @@ function TaskCard({ task, onEdit, onDelete, onDragStart, onDrop, isDragging }) {
           />
         </div>
       </div>
+
+      {/* Title */}
+      <div
+        className="mb-3"
+        style={{}}
+      >
+        <span
+          className="font-semibold"
+          style={{
+            display: "block",
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+          }}
+        >
+          {task.name}
+        </span>
+      </div>
+
       <div
         style={{
           height: "3px",
@@ -195,6 +256,7 @@ function KanbanColumn({
   priorityFilter,
   onPriorityFilterChange,
   draggedTaskId,
+  loading = false,
 }) {
   const [dragOver, setDragOver] = useState(false);
 
@@ -203,6 +265,20 @@ function KanbanColumn({
       ? tasks.filter((t) => priorityFilter.includes(t.priority))
       : tasks.filter((t) => t.priority === priorityFilter)
     : tasks;
+
+  // Calcula a altura dinâmica baseada no número de tasks
+  const getColumnHeight = () => {
+    const baseHeight = 350; // altura mínima (empty state com "Drag tasks here")
+    const tasksCount = loading ? 4 : filteredTasks.length;
+    
+    if (tasksCount === 0) return baseHeight;
+    
+    // Expande ~100px a cada task, sem limite máximo
+    const expandedHeight = baseHeight + (tasksCount * 100);
+    return expandedHeight;
+  };
+
+  const columnHeight = getColumnHeight();
 
   return (
     <div
@@ -223,10 +299,10 @@ function KanbanColumn({
         minWidth: "600px",
         maxWidth: "600px",
         flex: "0 0 600px",
-        minHeight: "700px",
+        minHeight: `${columnHeight}px`,
         display: "flex",
         flexDirection: "column",
-        transition: "background-color 0.2s ease, border-color 0.2s ease",
+        transition: "min-height 0.3s ease, background-color 0.2s ease, border-color 0.2s ease",
         backgroundColor: dragOver ? "rgba(var(--primary-500), 0.05)" : "var(--surface-card)",
         border: `2px solid ${dragOver ? "var(--primary-color)" : "var(--surface-border)"}`,
         borderRadius: "16px",
@@ -238,7 +314,7 @@ function KanbanColumn({
         style={{ gap: "1.25rem" }}
       >
         <Badge
-          value={filteredTasks.length}
+          value={loading ? "..." : filteredTasks.length}
           severity={columnStatus ? "success" : "danger"}
           style={{ borderRadius: "999px", minWidth: "2rem", marginRight: "0.25rem" }}
         />
@@ -259,6 +335,7 @@ function KanbanColumn({
           severity="success"
           outlined
           onClick={onCreate}
+          disabled={loading}
           style={{ alignSelf: "stretch", marginBottom: "1rem" }}
         />
       )}
@@ -270,6 +347,7 @@ function KanbanColumn({
           severity="danger"
           outlined
           onClick={onClear}
+          disabled={loading}
           style={{ alignSelf: "stretch", marginBottom: "1rem" }}
         />
       )}
@@ -281,6 +359,7 @@ function KanbanColumn({
           onChange={(e) => onPriorityFilterChange(e.value)}
           placeholder="Filter by priority"
           showClear
+          disabled={loading}
           style={{ width: "100%" }}
         />
       </div>
@@ -294,7 +373,14 @@ function KanbanColumn({
           overflowY: "auto",
         }}
       >
-        {filteredTasks.length === 0 ? (
+        {loading ? (
+          <>
+            <SkeletonTaskCard />
+            <SkeletonTaskCard />
+            <SkeletonTaskCard />
+            <SkeletonTaskCard />
+          </>
+        ) : filteredTasks.length === 0 ? (
           <div
             className="flex flex-column align-items-center justify-content-center py-6 text-500"
             style={{
@@ -600,11 +686,7 @@ export default function Home() {
         />
       </div>
 
-      {loading ? (
-        <div className="flex justify-content-center">
-          <ProgressSpinner />
-        </div>
-      ) : error ? (
+      {error ? (
         <div>{error}</div>
       ) : (
         <div
@@ -633,6 +715,7 @@ export default function Home() {
             priorityFilter={todoFilter}
             onPriorityFilterChange={setTodoFilter}
             draggedTaskId={draggedTaskId}
+            loading={loading}
           />
           <KanbanColumn
             title="Completed"
@@ -647,6 +730,7 @@ export default function Home() {
             priorityFilter={doneFilter}
             onPriorityFilterChange={setDoneFilter}
             draggedTaskId={draggedTaskId}
+            loading={loading}
           />
         </div>
       )}

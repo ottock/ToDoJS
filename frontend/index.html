@@ -5,6 +5,20 @@
     <link rel="icon" type="image/svg+xml" href="" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ToDoJS</title>
+    <script>
+      // Load theme immediately to prevent CSS flash
+      (function() {
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        const isDark = savedTheme === 'dark';
+        
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.id = 'theme-link';
+        link.href = isDark ? '/src/presentation/assets/theme-dark.css' : '/src/presentation/assets/theme-light.css';
+        
+        document.head.appendChild(link);
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

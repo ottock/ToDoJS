@@ -8,7 +8,6 @@ export default class TaskService {
 
     async createTask(data) {
         const payload = data ?? {};
-
         const task = new TaskData(
             null,
             payload.name?.trim() ? payload.name.trim() : undefined,
@@ -32,7 +31,7 @@ export default class TaskService {
             data.created_date,
             data.priority,
             data.description,
-            data.status ?? false
+            data.status
         );
 
         return this.repository.update(task);
