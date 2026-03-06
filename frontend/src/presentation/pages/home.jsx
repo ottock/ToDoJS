@@ -257,7 +257,7 @@ function KanbanColumn({
   onPriorityFilterChange,
   draggedTaskId,
   loading = false,
-  isMobile = false,
+  stackOnMobilePortrait = false,
 }) {
   const [dragOver, setDragOver] = useState(false);
 
@@ -296,10 +296,10 @@ function KanbanColumn({
         dragOver ? "border-primary" : "surface-border"
       }`}
       style={{
-        width: isMobile ? "100%" : "600px",
-        minWidth: isMobile ? "100%" : "600px",
+        width: stackOnMobilePortrait ? "100%" : "600px",
+        minWidth: stackOnMobilePortrait ? "100%" : "600px",
         maxWidth: "600px",
-        flex: isMobile ? "1 1 100%" : "0 0 600px",
+        flex: stackOnMobilePortrait ? "1 1 100%" : "0 0 600px",
         minHeight: `${columnHeight}px`,
         display: "flex",
         flexDirection: "column",
@@ -450,9 +450,9 @@ export default function Home() {
 
   const [todoFilter, setTodoFilter] = useState(["H", "M", "L"]);
   const [doneFilter, setDoneFilter] = useState(["H", "M", "L"]);
-  const [isMobile, setIsMobile] = useState(() =>
+  const [stackOnMobilePortrait, setStackOnMobilePortrait] = useState(() =>
     typeof window !== "undefined"
-      ? window.matchMedia("(max-width: 768px)").matches
+      ? window.matchMedia("(max-width: 900px) and (orientation: portrait)").matches
       : false
   );
 
@@ -486,8 +486,8 @@ export default function Home() {
   }, [isDark]);
 
   useEffect(() => {
-    const mediaQuery = window.matchMedia("(max-width: 768px)");
-    const updateViewport = () => setIsMobile(mediaQuery.matches);
+    const mediaQuery = window.matchMedia("(max-width: 900px) and (orientation: portrait)");
+    const updateViewport = () => setStackOnMobilePortrait(mediaQuery.matches);
 
     updateViewport();
     mediaQuery.addEventListener("change", updateViewport);
@@ -711,12 +711,12 @@ export default function Home() {
           className="kanban-container"
           style={{
             display: "flex",
-            flexDirection: isMobile ? "column" : "row",
-            alignItems: "center",
+            flexDirection: stackOnMobilePortrait ? "column" : "row",
+            alignItems: stackOnMobilePortrait ? "stretch" : "flex-start",
             justifyContent: "center",
             gap: "1rem",
-            overflowX: isMobile ? "hidden" : "auto",
-            overflowY: "hidden",
+            overflowX: stackOnMobilePortrait ? "hidden" : "auto",
+            overflowY: "visible",
             width: "100%",
             paddingBottom: "0.5rem",
             scrollBehavior: "smooth",
@@ -736,7 +736,7 @@ export default function Home() {
             onPriorityFilterChange={setTodoFilter}
             draggedTaskId={draggedTaskId}
             loading={loading}
-            isMobile={isMobile}
+            stackOnMobilePortrait={stackOnMobilePortrait}
           />
           <KanbanColumn
             title="Completed"
@@ -752,7 +752,7 @@ export default function Home() {
             onPriorityFilterChange={setDoneFilter}
             draggedTaskId={draggedTaskId}
             loading={loading}
-            isMobile={isMobile}
+            stackOnMobilePortrait={stackOnMobilePortrait}
           />
         </div>
       )}
