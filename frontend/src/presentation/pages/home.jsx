@@ -125,9 +125,7 @@ function TaskCard({ task, onEdit, onDelete, onDragStart, onDrop, isDragging }) {
         transition: "transform 0.15s ease, opacity 0.15s ease, border-color 0.15s ease",
         transform: isDragging 
           ? "scale(0.90) rotate(2deg)" 
-          : hover 
-          ? "translateY(-2px)" 
-          : "translateY(0)",
+          : "scale(1)",
         opacity: isDragging ? 0.7 : 1,
         padding: "0.75rem 1.1rem 1rem 1.1rem",
       }}
@@ -253,6 +251,13 @@ function KanbanColumn({
   stackOnMobilePortrait = false,
 }) {
   const [dragOver, setDragOver] = useState(false);
+
+  // Reseta dragOver quando o drag termina
+  useEffect(() => {
+    if (draggedTaskId === null) {
+      setDragOver(false);
+    }
+  }, [draggedTaskId]);
 
   const filteredTasks = priorityFilter
     ? Array.isArray(priorityFilter)
@@ -522,69 +527,72 @@ export default function Home() {
   };
 
   const handleDrop = async (e, status, targetId) => {
-    e.preventDefault();
-    setDraggedTaskId(null);
-    
-    if (!dragTask.current) return;
+    try {
+      e.preventDefault();
+      
+      if (!dragTask.current) {
+        setDraggedTaskId(null);
+        return;
+      }
 
-    const source = dragTask.current;
-    dragTask.current = null;
+      const source = dragTask.current;
+      dragTask.current = null;
 
-    // Reorder within same column (status) when dropping on a task
-    if (source.status === status && targetId && targetId !== source.id) {
-      setTasks((prev) => {
-        const inColumn = prev.filter((t) => t.status === status);
-        const others = prev.filter((t) => t.status !== status);
+      // Move between columns (change status)
+      if (source.status !== status) {
+        // Atualizar status e recalcular ordem
+        setTasks((prev) => {
+          const updated = { ...source, status };
+          const newTasks = prev.map((t) => (t.id === source.id ? updated : t));
+          
+          // Reorganizar ordem na coluna de destino
+          const inDestColumn = newTasks.filter((t) => t.status === status);
+          const others = newTasks.filter((t) => t.status !== status);
+          
+          const updatedWithOrder = inDestColumn.map((task, index) => ({
+            ...task,
+            order: index,
+          }));
 
-        const fromIndex = inColumn.findIndex((t) => t.id === source.id);
-        const toIndex = inColumn.findIndex((t) => t.id === targetId);
+          // Salvar no backend
+          consumer.updateTask(source.id, { ...updated, order: updatedWithOrder.length - 1 });
 
-        if (fromIndex === -1 || toIndex === -1) return prev;
+          return [...others, ...updatedWithOrder];
+        });
+      } else if (targetId && targetId !== source.id) {
+        // Reorder within same column (status) when dropping on a task
+        setTasks((prev) => {
+          const inColumn = prev.filter((t) => t.status === status);
+          const others = prev.filter((t) => t.status !== status);
 
-        const updatedColumn = [...inColumn];
-        const [moved] = updatedColumn.splice(fromIndex, 1);
-        updatedColumn.splice(toIndex, 0, moved);
+          const fromIndex = inColumn.findIndex((t) => t.id === source.id);
+          const toIndex = inColumn.findIndex((t) => t.id === targetId);
 
-        // Atualizar ordem de todas as tasks da coluna
-        const updatedWithOrder = updatedColumn.map((task, index) => ({
-          ...task,
-          order: index,
-        }));
+          if (fromIndex === -1 || toIndex === -1) return prev;
 
-        // Salvar ordem no backend
-        Promise.all(
-          updatedWithOrder.map((task) =>
-            consumer.updateTask(task.id, task)
-          )
-        );
+          const updatedColumn = [...inColumn];
+          const [moved] = updatedColumn.splice(fromIndex, 1);
+          updatedColumn.splice(toIndex, 0, moved);
 
-        return [...others, ...updatedWithOrder];
-      });
-      return;
+          // Atualizar ordem de todas as tasks da coluna
+          const updatedWithOrder = updatedColumn.map((task, index) => ({
+            ...task,
+            order: index,
+          }));
+
+          // Salvar ordem no backend
+          Promise.all(
+            updatedWithOrder.map((task) =>
+              consumer.updateTask(task.id, task)
+            )
+          );
+
+          return [...others, ...updatedWithOrder];
+        });
+      }
+    } finally {
+      setDraggedTaskId(null);
     }
-
-    // Move between columns (change status)
-    if (source.status === status) return;
-
-    // Atualizar status e recalcular ordem
-    setTasks((prev) => {
-      const updated = { ...source, status };
-      const newTasks = prev.map((t) => (t.id === source.id ? updated : t));
-      
-      // Reorganizar ordem na coluna de destino
-      const inDestColumn = newTasks.filter((t) => t.status === status);
-      const others = newTasks.filter((t) => t.status !== status);
-      
-      const updatedWithOrder = inDestColumn.map((task, index) => ({
-        ...task,
-        order: index,
-      }));
-
-      // Salvar no backend
-      consumer.updateTask(source.id, { ...updated, order: updatedWithOrder.length - 1 });
-
-      return [...others, ...updatedWithOrder];
-    });
   };
 
   /* =========================
