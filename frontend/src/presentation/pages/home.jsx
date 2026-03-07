@@ -37,15 +37,8 @@ const FILTER_OPTIONS = [
   { label: "Low", value: "L" },
 ];
 
-// Theme asset URLs resolved by Vite
-const LIGHT_THEME_HREF = new URL(
-  "../assets/theme-light.css",
-  import.meta.url
-).href;
-const DARK_THEME_HREF = new URL(
-  "../assets/theme-dark.css",
-  import.meta.url
-).href;
+const LIGHT_THEME_HREF = "/src/presentation/assets/theme-light.css";
+const DARK_THEME_HREF = "/src/presentation/assets/theme-dark.css";
 
 function PriorityTemplate(option) {
   if (!option) return null;
@@ -472,14 +465,13 @@ export default function Home() {
   ========================= */
 
   useEffect(() => {
-    let link = document.getElementById("theme-link");
-    if (!link) {
-      link = document.createElement("link");
-      link.id = "theme-link";
-      link.rel = "stylesheet";
-      document.head.appendChild(link);
+    const link = document.getElementById("theme-link");
+    if (!link) return;
+
+    const nextHref = isDark ? DARK_THEME_HREF : LIGHT_THEME_HREF;
+    if (link.getAttribute("href") !== nextHref) {
+      link.setAttribute("href", nextHref);
     }
-    link.href = isDark ? DARK_THEME_HREF : LIGHT_THEME_HREF;
     
     // Salvar tema no localStorage
     localStorage.setItem('theme', isDark ? 'dark' : 'light');

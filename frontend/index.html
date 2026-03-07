@@ -5,24 +5,7 @@
     <link rel="icon" type="image/svg+xml" href="" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ToDoJS</title>
-    
-    <!-- PrimeReact CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/primereact/resources/themes/lara-light-blue/theme.css" id="theme-link" />
-    <link rel="stylesheet" href="https://unpkg.com/primereact/resources/primereact.min.css" />
-    <link rel="stylesheet" href="https://unpkg.com/primeicons/primeicons.css" />
-    
-    <!-- Load theme CSS immediately to prevent FOUC -->
-    <script>
-      (function() {
-        const savedTheme = localStorage.getItem('theme') || 'light';
-        const themeLink = document.getElementById('theme-link');
-        
-        if (savedTheme === 'dark') {
-          themeLink.href = 'https://unpkg.com/primereact/resources/themes/lara-dark-blue/theme.css';
-        }
-      })();
-    </script>
-    
+
     <style>
       /* Hide content until CSS is loaded */
       html {
@@ -46,17 +29,64 @@
         min-height: 100vh;
       }
     </style>
+
+    <link rel="stylesheet" id="theme-link" href="" />
+
+    <script>
+      (function () {
+        let savedTheme = "light";
+        try {
+          savedTheme = localStorage.getItem("theme") || "light";
+        } catch (_) {
+          savedTheme = "light";
+        }
+
+        const themeHref =
+          savedTheme === "dark"
+            ? "/src/presentation/assets/theme-dark.css"
+            : "/src/presentation/assets/theme-light.css";
+
+        const themeLink = document.getElementById("theme-link");
+        themeLink.setAttribute("href", themeHref);
+
+        const stylesheetIds = ["theme-link"];
+        const links = stylesheetIds
+          .map((id) => document.getElementById(id))
+          .filter(Boolean);
+
+        let pending = links.length;
+        let revealed = false;
+        const revealPage = () => {
+          if (revealed) return;
+          revealed = true;
+          document.documentElement.classList.add("css-loaded");
+        };
+
+        const onDone = () => {
+          pending -= 1;
+          if (pending <= 0) {
+            revealPage();
+          }
+        };
+
+        links.forEach((link) => {
+          link.addEventListener("load", onDone, { once: true });
+          link.addEventListener("error", onDone, { once: true });
+        });
+
+        // Fallback for cached or already-loaded stylesheets.
+        window.addEventListener("load", revealPage, { once: true });
+        // Emergency fallback: never keep screen hidden indefinitely.
+        setTimeout(revealPage, 2000);
+
+        if (pending === 0) {
+          revealPage();
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
-    <script type="module">
-      // Mark CSS as loaded once DOM is ready
-      document.addEventListener('DOMContentLoaded', () => {
-        setTimeout(() => {
-          document.documentElement.classList.add('css-loaded');
-        }, 0);
-      });
-    </script>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
