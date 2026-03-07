@@ -101,8 +101,9 @@ function TaskCard({ task, onEdit, onDelete, onDragStart, onDrop, isDragging }) {
   // Format date from YYYY-MM-DD to DD/MM/YY format
   const formatDate = (dateString) => {
     if (!dateString) return "";
-    // dateString comes as "YYYY-MM-DD" or similar format from backend
-    const date = new Date(dateString);
+    // dateString comes as "YYYY-MM-DD" format from backend
+    const [year, month, day] = dateString.split('-');
+    const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
     if (isNaN(date.getTime())) return dateString; // If invalid, return original
     return new Intl.DateTimeFormat("pt-BR", {
       day: "2-digit",

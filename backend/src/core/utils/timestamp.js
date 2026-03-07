@@ -5,12 +5,10 @@ export function today_date() {
 
 export function format_date(date) {
     if (date instanceof Date) {
-        return today_date();
+        return date.toISOString().slice(0, 10);
     }
-    if (date === "string") {
+    if (typeof date === "string") {
         return date.slice(0, 10);
     }
     return date;
 }
-
-console.log(today_date());
