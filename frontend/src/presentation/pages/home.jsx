@@ -39,6 +39,7 @@ const FILTER_OPTIONS = [
 
 const LIGHT_THEME_HREF = "/src/presentation/assets/theme-light.css";
 const DARK_THEME_HREF = "/src/presentation/assets/theme-dark.css";
+const STACK_COLUMNS_MEDIA_QUERY = "(max-width: 1100px), (orientation: portrait)";
 
 function PriorityTemplate(option) {
   if (!option) return null;
@@ -295,10 +296,10 @@ function KanbanColumn({
         dragOver ? "border-primary" : "surface-border"
       }`}
       style={{
-        width: stackOnMobilePortrait ? "100%" : "600px",
-        minWidth: stackOnMobilePortrait ? "100%" : "600px",
-        maxWidth: "600px",
-        flex: stackOnMobilePortrait ? "1 1 100%" : "0 0 600px",
+        width: stackOnMobilePortrait ? "100%" : "min(560px, calc((100vw - 6rem) / 2))",
+        minWidth: stackOnMobilePortrait ? "100%" : "360px",
+        maxWidth: stackOnMobilePortrait ? "100%" : "600px",
+        flex: stackOnMobilePortrait ? "1 1 100%" : "1 1 360px",
         minHeight: `${columnHeight}px`,
         display: "flex",
         flexDirection: "column",
@@ -451,7 +452,7 @@ export default function Home() {
   const [doneFilter, setDoneFilter] = useState(["H", "M", "L"]);
   const [stackOnMobilePortrait, setStackOnMobilePortrait] = useState(() =>
     typeof window !== "undefined"
-      ? window.matchMedia("(max-width: 900px) and (orientation: portrait)").matches
+      ? window.matchMedia(STACK_COLUMNS_MEDIA_QUERY).matches
       : false
   );
 
@@ -484,7 +485,7 @@ export default function Home() {
   }, [isDark]);
 
   useEffect(() => {
-    const mediaQuery = window.matchMedia("(max-width: 900px) and (orientation: portrait)");
+    const mediaQuery = window.matchMedia(STACK_COLUMNS_MEDIA_QUERY);
     const updateViewport = () => setStackOnMobilePortrait(mediaQuery.matches);
 
     updateViewport();
