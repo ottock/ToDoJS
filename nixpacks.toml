@@ -1,5 +1,5 @@
 [phases.setup]
-nixPkgs = ["nodejs"]
+nixPkgs = ["nodejs_22"]
 
 [phases.install]
 cmds = ["if [ \"$APP_TARGET\" = \"frontend\" ]; then cd frontend && npm install; else cd backend && npm install; fi"]
