@@ -1,6 +1,17 @@
 {
+  "name": "todojs-backend",
+  "version": "1.0.0",
+  "private": true,
+  "description": "API backend for ToDoJS",
   "type": "module",
   "main": "src/main.js",
+  "scripts": {
+    "start": "node src/main.js",
+    "dev": "node --watch src/main.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
   "dependencies": {
     "cors": "^2.8.6",
     "dotenv": "^17.3.1",
