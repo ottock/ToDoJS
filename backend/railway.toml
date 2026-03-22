@@ -1,6 +1,5 @@
 [build]
 builder = "NIXPACKS"
-buildCommand = "npm install"
 
 [deploy]
 startCommand = "BACKEND_PORT=$PORT node src/main.js"
