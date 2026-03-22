@@ -469,7 +469,11 @@ export default function Home() {
       return `${normalizedHost}:${envPort}`;
     }
 
-    return undefined;
+    if (envPort) {
+      return `http://localhost:${envPort}`;
+    }
+
+    return "http://localhost:3000";
   }, []);
 
   const consumer = useMemo(() => new TaskConsumer(apiUrl), [apiUrl]);
