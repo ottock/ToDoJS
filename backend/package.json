@@ -1,5 +1,6 @@
 {
   "type": "module",
+  "main": "src/main.js",
   "dependencies": {
     "cors": "^2.8.6",
     "dotenv": "^17.3.1",
