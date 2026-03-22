@@ -460,10 +460,17 @@ export default function Home() {
   const [draggedTaskId, setDraggedTaskId] = useState(null);
   const toast = useRef(null);
 
-  const apiUrl = useMemo(
-    () => import.meta.env.VITE_BACKEND_URL || "http://localhost:3000",
-    []
-  );
+  const apiUrl = useMemo(() => {
+    const envHost = import.meta.env.BACKEND_HOST;
+    const envPort = import.meta.env.BACKEND_PORT;
+
+    if (envHost && envPort) {
+      const normalizedHost = String(envHost).replace(/\/+$/, "");
+      return `${normalizedHost}:${envPort}`;
+    }
+
+    return undefined;
+  }, []);
 
   const consumer = useMemo(() => new TaskConsumer(apiUrl), [apiUrl]);
 

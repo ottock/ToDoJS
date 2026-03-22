@@ -18,7 +18,7 @@ export default class TaskApi {
         this.app.use(cors({
             origin: this.cors_origin
         }));
-        this.app.use('/tasks', apiRoutes(this.taskService));
+        this.app.use('/', apiRoutes(this.taskService));
 
         // 404 handler
         this.app.use((req, res) => {
@@ -38,7 +38,7 @@ export default class TaskApi {
 
     running() {
         const server = this.createApi().listen(this.api_port, () => {
-            console.log(`BACKEND RUNNING AT: http://localhost:${this.api_port}`);
+            console.log(`BACKEND RUNNING ON PORT: ${this.api_port}`);
         });
 
         return server;

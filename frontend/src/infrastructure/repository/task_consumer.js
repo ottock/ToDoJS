@@ -10,24 +10,24 @@ export default class TaskConsumer {
     }
 
     async createTask(data) {
-        const response = await this.api.post("/tasks/createTask", data);
+        const response = await this.api.post("/createTask", data);
         return response.data;
     }
 
     async readAllTasks() {
-        const response = await this.api.get("/tasks/readAllTasks");
+        const response = await this.api.get("/readAllTasks");
         return response.data;
     }
 
     async updateTask(id, data) {
-        const response = await this.api.put("/tasks/updateTask", data, {
+        const response = await this.api.put("/updateTask", data, {
             params: { id }
         });
         return response.data;
     }
 
     async deleteTask(id) {
-        const response = await this.api.delete(`/tasks/deleteTask`, {
+        const response = await this.api.delete(`/deleteTask`, {
             params: { id }
         });
         return response.data;

@@ -1,7 +1,10 @@
 @echo off
+setlocal
 title launchProject
 echo +++ EXECUTING launchProject.bat +++
-cd /d C:\Users\ottoc\projects\ToDoJS\scripts\windows
-start cmd /k "launchBackend.bat"
-start cmd /k "launchFrontend.bat"
+pushd "%~dp0"
+start "" "%~dp0launchBackend.bat"
+start "" "%~dp0launchFrontend.bat"
+popd
 echo +++ EXECUTED launchProject.bat +++
+endlocal
