@@ -1,0 +1,11 @@
+[phases.setup]
+nixPkgs = ["nodejs"]
+
+[phases.install]
+cmds = ["if [ \"$APP_TARGET\" = \"frontend\" ]; then cd frontend && npm install; else cd backend && npm install; fi"]
+
+[phases.build]
+cmds = ["if [ \"$APP_TARGET\" = \"frontend\" ]; then cd frontend && npm run build; fi"]
+
+[start]
+cmd = "if [ \"$APP_TARGET\" = \"frontend\" ]; then cd frontend && npm run preview -- --host 0.0.0.0 --port $PORT; else cd backend && BACKEND_PORT=$PORT node src/main.js; fi"
