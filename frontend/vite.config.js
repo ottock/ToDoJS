@@ -6,4 +6,8 @@ export default defineConfig({
   plugins: [react()],
   envDir: '..',
   envPrefix: ['VITE_', 'BACKEND_'],
+  server: {
+    host: "172.20.10.2",
+    port: 5173
+  }
 })
