@@ -10,8 +10,10 @@ export default function credentials() {
     const credentials = {
         DATABASE_URL: process.env.DATABASE_URL,
         DATABASE_SSL: process.env.DATABASE_SSL,
-        BACKEND_URL: process.env.BACKEND_URL,
-        FRONTEND_URL: process.env.FRONTEND_URL,
+        BACKEND_HOST: process.env.BACKEND_HOST,
+        BACKEND_PORT: process.env.BACKEND_PORT,
+        FRONTEND_HOST: process.env.FRONTEND_HOST,
+        FRONTEND_PORT: process.env.FRONTEND_PORT,
     };
 
     return credentials;

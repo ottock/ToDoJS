@@ -451,7 +451,14 @@ export default function Home() {
   const toast = useRef(null);
 
   const apiUrl = useMemo(() => {
-    return import.meta.env.BACKEND_URL;
+    const host = String(import.meta.env.BACKEND_HOST || "").trim();
+    const port = String(import.meta.env.BACKEND_PORT || "").trim();
+
+    if (!host || !port) {
+      throw new Error("BACKEND_HOST and BACKEND_PORT must be defined in .env");
+    }
+
+    return `http://${host}:${port}`;
   }, []);
 
   const consumer = useMemo(() => new TaskConsumer(apiUrl), [apiUrl]);
