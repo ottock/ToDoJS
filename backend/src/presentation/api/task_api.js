@@ -6,8 +6,8 @@ import express from "express";
 import apiRoutes from "../routes/task_routes.js";
 
 export default class TaskApi {
-    constructor(api_port, cors_origin, taskService) {
-        this.api_port = api_port;
+    constructor(api_url, cors_origin, taskService) {
+        this.api_url = api_url;
         this.cors_origin = cors_origin;
         this.taskService = taskService;
         this.app = express();
@@ -37,8 +37,8 @@ export default class TaskApi {
     }
 
     running() {
-        const server = this.createApi().listen(this.api_port, () => {
-            console.log(`BACKEND RUNNING ON PORT: ${this.api_port}`);
+        const server = this.createApi().listen(this.api_url, () => {
+            console.log(`BACKEND RUNNING ON PORT: ${this.api_url}`);
         });
 
         return server;

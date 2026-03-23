@@ -97,7 +97,6 @@ function SkeletonTaskCard() {
 
 function TaskCard({ task, onEdit, onDelete, onDragStart, onDrop, isDragging }) {
   const priority = PRIORITY_CONFIG[task.priority] ?? PRIORITY_CONFIG.M;
-  const [hover, setHover] = useState(false);
 
   // Format date from YYYY-MM-DD to DD/MM/YY format
   const formatDate = (dateString) => {
@@ -131,8 +130,6 @@ function TaskCard({ task, onEdit, onDelete, onDragStart, onDrop, isDragging }) {
         opacity: isDragging ? 0.7 : 1,
         padding: "0.75rem 1.1rem 1rem 1.1rem",
       }}
-      onMouseEnter={() => setHover(true)}
-      onMouseLeave={() => setHover(false)}
       onDragOver={(e) => e.preventDefault()}
       onDrop={(e) => {
         e.preventDefault();
@@ -253,13 +250,6 @@ function KanbanColumn({
   stackOnMobilePortrait = false,
 }) {
   const [dragOver, setDragOver] = useState(false);
-
-  // Reseta dragOver quando o drag termina
-  useEffect(() => {
-    if (draggedTaskId === null) {
-      setDragOver(false);
-    }
-  }, [draggedTaskId]);
 
   const filteredTasks = priorityFilter
     ? Array.isArray(priorityFilter)
@@ -461,19 +451,7 @@ export default function Home() {
   const toast = useRef(null);
 
   const apiUrl = useMemo(() => {
-    const envHost = import.meta.env.BACKEND_HOST;
-    const envPort = import.meta.env.BACKEND_PORT;
-
-    if (envHost && envPort) {
-      const normalizedHost = String(envHost).replace(/\/+$/, "");
-      return `${normalizedHost}:${envPort}`;
-    }
-
-    if (envPort) {
-      return `http://localhost:${envPort}`;
-    }
-
-    return "http://localhost:3000";
+    return import.meta.env.BACKEND_URL;
   }, []);
 
   const consumer = useMemo(() => new TaskConsumer(apiUrl), [apiUrl]);

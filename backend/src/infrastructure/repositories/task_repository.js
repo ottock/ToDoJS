@@ -2,6 +2,7 @@
 import db from "../databases/postgres.js";
 import TaskData from "../../domain/models/task_data_model.js";
 
+
 export default class TaskRepository {
     async create(task) {
         const rows = await db.queryFromFile(

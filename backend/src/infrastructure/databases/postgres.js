@@ -8,6 +8,17 @@ import credentials from "../../core/utils/credentials.js";
 // contants
 const { Pool } = pkg;
 const config = credentials();
+const connectionString = config.DATABASE_URL;
+
+if (!connectionString) {
+    throw new Error("DATABASE_URL is required to connect to Postgres");
+}
+
+const poolConfig = { connectionString };
+
+if (config.DB_SSL === "true") {
+    poolConfig.ssl = { rejectUnauthorized: false };
+}
 
 // functions
 async function queryFromFile(filePath, params = []) {
@@ -16,13 +27,7 @@ async function queryFromFile(filePath, params = []) {
     return result.rows;
 }
 
-const pool = new Pool({
-    host: config.DB_HOST,
-    user: config.DB_USER,
-    port: config.DB_PORT,
-    password: config.DB_PASSWORD,
-    database: config.DB_NAME,
-});
+const pool = new Pool(poolConfig);
 
 const db = {
     queryFromFile,

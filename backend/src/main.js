@@ -7,21 +7,19 @@ import TaskRepository from "./infrastructure/repositories/task_repository.js";
 // constants
 const config = credentials();
 
+function resolveBackendPort() {
+    if (!config.BACKEND_URL) {
+        throw new Error("BACKEND_URL is required");
+    }
+
+    const url = new URL(config.BACKEND_URL);
+    return Number(url.port);
+}
+
 async function bootstrap() {
-
-    // Infrastructure
     const taskRepository = new TaskRepository();
-
-    // Application
     const taskService = new TaskService(taskRepository);
-
-    // Presentation
-    const backendApi = new TaskApi(
-        config.BACKEND_PORT,
-        config.FRONTEND_CORS,
-        taskService
-    );
-
+    const backendApi = new TaskApi(resolveBackendPort(), config.FRONTEND_URL, taskService);
     backendApi.running();
 }
 
