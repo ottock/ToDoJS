@@ -481,6 +481,7 @@ function CalendarColumn({ tasks, stackOnMobilePortrait = false }) {
     const now = new Date();
     return new Date(now.getFullYear(), now.getMonth(), 1);
   });
+  const [selectedDate, setSelectedDate] = useState(null);
 
   const monthDays = useMemo(() => {
     const start = new Date(viewDate.getFullYear(), viewDate.getMonth(), 1);
@@ -551,6 +552,37 @@ function CalendarColumn({ tasks, stackOnMobilePortrait = false }) {
 
   const weekDayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
+  const selectedDateTasks = useMemo(() => {
+    if (!selectedDate) return [];
+
+    return tasks
+      .filter((task) => {
+        const fromDate = parseISODateString(task.from_date);
+        const dueDate = parseISODateString(task.due_date);
+
+        if (fromDate && dueDate) {
+          const start = fromDate.getTime() <= dueDate.getTime() ? fromDate : dueDate;
+          const end = fromDate.getTime() <= dueDate.getTime() ? dueDate : fromDate;
+          return selectedDate.getTime() >= start.getTime() && selectedDate.getTime() <= end.getTime();
+        }
+
+        if (!fromDate && dueDate) {
+          return selectedDate.getTime() === dueDate.getTime();
+        }
+
+        if (fromDate && !dueDate) {
+          return selectedDate.getTime() === fromDate.getTime();
+        }
+
+        return false;
+      })
+      .sort((a, b) => {
+        const priorityDiff = PRIORITY_RANK[b.priority] - PRIORITY_RANK[a.priority];
+        if (priorityDiff !== 0) return priorityDiff;
+        return Number(a.status) - Number(b.status);
+      });
+  }, [selectedDate, tasks]);
+
   const goToCurrentMonth = () => {
     const now = new Date();
     setViewDate(new Date(now.getFullYear(), now.getMonth(), 1));
@@ -564,7 +596,7 @@ function CalendarColumn({ tasks, stackOnMobilePortrait = false }) {
         minWidth: stackOnMobilePortrait ? "100%" : "360px",
         maxWidth: stackOnMobilePortrait ? "100%" : "600px",
         flex: stackOnMobilePortrait ? "1 1 100%" : "1 1 360px",
-        height: "450px",
+        minHeight: "450px",
         backgroundColor: "var(--surface-card)",
         border: "2px solid var(--surface-border)",
         borderRadius: "16px",
@@ -683,10 +715,16 @@ function CalendarColumn({ tasks, stackOnMobilePortrait = false }) {
               .sort((a, b) => PRIORITY_RANK[b] - PRIORITY_RANK[a])[0];
             const fillColor = fillPriority ? PRIORITY_COLORS[fillPriority] : null;
             const textColor = fillColor ? "#ffffff" : "var(--text-color)";
+            const isSelected = selectedDate?.getTime() === day.getTime();
 
             return (
               <div
                 key={key}
+                onClick={() =>
+                  setSelectedDate((prev) =>
+                    prev?.getTime() === day.getTime() ? null : new Date(day.getFullYear(), day.getMonth(), day.getDate())
+                  )
+                }
                 style={{
                   position: "relative",
                   height: "2.2rem",
@@ -697,6 +735,10 @@ function CalendarColumn({ tasks, stackOnMobilePortrait = false }) {
                   alignItems: "center",
                   justifyContent: "center",
                   overflow: "hidden",
+                  cursor: "pointer",
+                  boxShadow: isSelected ? "inset 0 0 0 2px var(--primary-color)" : "none",
+                  transform: isSelected ? "translateY(-1px)" : "none",
+                  transition: "transform 0.12s ease, box-shadow 0.12s ease",
                 }}
               >
                 <span style={{ position: "relative", zIndex: 1, fontWeight: 700, color: textColor }}>
@@ -706,6 +748,67 @@ function CalendarColumn({ tasks, stackOnMobilePortrait = false }) {
             );
           })}
         </div>
+
+        {selectedDate && (
+          <>
+            <Divider style={{ margin: "0.8rem 0 0.6rem 0" }} />
+
+            <div
+              style={{
+                border: "1px solid var(--surface-border)",
+                borderRadius: "10px",
+                padding: "0.75rem",
+                maxHeight: "170px",
+                overflowY: "auto",
+              }}
+            >
+              <div
+                style={{
+                  fontSize: "0.85rem",
+                  fontWeight: 700,
+                  marginBottom: "0.55rem",
+                }}
+              >
+                Tasks on {new Intl.DateTimeFormat("pt-BR").format(selectedDate)}
+              </div>
+
+              {selectedDateTasks.length === 0 ? (
+                <span style={{ fontSize: "0.85rem", opacity: 0.75 }}>No tasks for this day.</span>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: "0.45rem" }}>
+                  {selectedDateTasks.map((task) => (
+                    <div
+                      key={`selected-${task.id}`}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        gap: "0.5rem",
+                        fontSize: "0.8rem",
+                      }}
+                    >
+                      <span
+                        style={{
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                          fontWeight: 600,
+                        }}
+                      >
+                        {task.name}
+                      </span>
+                      <Tag
+                        severity={PRIORITY_CONFIG[task.priority]?.severity || "info"}
+                        value={PRIORITY_CONFIG[task.priority]?.label || "Unknown"}
+                        style={{ fontSize: "0.7rem", minWidth: "4.5rem", justifyContent: "center" }}
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
