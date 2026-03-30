@@ -95,7 +95,7 @@ function SkeletonTaskCard() {
   );
 }
 
-function TaskCard({ task, onEdit, onDelete, onDragStart, onDrop, isDragging }) {
+function TaskCard({ task, onEdit, onDelete, onDragStart, onDragEnd, onDrop, isDragging }) {
   const priority = PRIORITY_CONFIG[task.priority] ?? PRIORITY_CONFIG.M;
 
   // Format date from YYYY-MM-DD to DD/MM/YY format
@@ -116,6 +116,7 @@ function TaskCard({ task, onEdit, onDelete, onDragStart, onDrop, isDragging }) {
     <div
       draggable
       onDragStart={(e) => onDragStart(e, task)}
+      onDragEnd={onDragEnd}
       className="surface-card border-round-lg border-1 surface-border p-3 mb-3"
       style={{
         cursor: "grab",
@@ -177,6 +178,7 @@ function TaskCard({ task, onEdit, onDelete, onDragStart, onDrop, isDragging }) {
           className="font-semibold"
           style={{
             display: "block",
+            fontWeight: 800,
             whiteSpace: "nowrap",
             overflow: "hidden",
             textOverflow: "ellipsis",
@@ -239,6 +241,7 @@ function KanbanColumn({
   onDelete,
   onDrop,
   onDragStart,
+  onDragEnd,
   showCreateButton = false,
   onCreate,
   showClearButton = false,
@@ -399,7 +402,15 @@ function KanbanColumn({
               onEdit={onEdit}
               onDelete={onDelete}
               onDragStart={onDragStart}
-              onDrop={onDrop ? (e) => onDrop(e, columnStatus, task.id) : undefined}
+              onDragEnd={onDragEnd}
+              onDrop={
+                onDrop
+                  ? (e) => {
+                      setDragOver(false);
+                      onDrop(e, columnStatus, task.id);
+                    }
+                  : undefined
+              }
             />
           ))
         )}
@@ -522,6 +533,11 @@ export default function Home() {
     dragTask.current = task;
     setDraggedTaskId(task.id);
     e.dataTransfer.effectAllowed = "move";
+  };
+
+  const handleDragEnd = () => {
+    dragTask.current = null;
+    setDraggedTaskId(null);
   };
 
   const handleDrop = async (e, status, targetId) => {
@@ -728,6 +744,7 @@ export default function Home() {
             onDelete={handleDelete}
             onDrop={handleDrop}
             onDragStart={handleDragStart}
+            onDragEnd={handleDragEnd}
             showCreateButton
             onCreate={openCreate}
             priorityFilter={todoFilter}
@@ -744,6 +761,7 @@ export default function Home() {
             onDelete={handleDelete}
             onDrop={handleDrop}
             onDragStart={handleDragStart}
+            onDragEnd={handleDragEnd}
             showClearButton
             onClear={handleClearCompleted}
             priorityFilter={doneFilter}

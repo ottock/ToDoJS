@@ -2,6 +2,17 @@
 @import "primereact/resources/primereact.min.css";
 @import "primeicons/primeicons.css";
 
+html,
+body,
+#root,
+* {
+  font-family: "JetBrains Mono", monospace;
+}
+
+.p-component {
+  font-family: "JetBrains Mono", monospace;
+}
+
 /* Ocultar scrollbar mas manter funcionalidade */
 * {
   scrollbar-width: none; /* Firefox */
