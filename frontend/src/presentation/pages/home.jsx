@@ -5,6 +5,7 @@ import { Dialog } from "primereact/dialog";
 import { InputText } from "primereact/inputtext";
 import { InputTextarea } from "primereact/inputtextarea";
 import { Dropdown } from "primereact/dropdown";
+import { Calendar } from "primereact/calendar";
 import { Tag } from "primereact/tag";
 import { Badge } from "primereact/badge";
 import { Divider } from "primereact/divider";
@@ -40,6 +41,48 @@ const FILTER_OPTIONS = [
 const LIGHT_THEME_HREF = "/src/presentation/assets/theme-light.css";
 const DARK_THEME_HREF = "/src/presentation/assets/theme-dark.css";
 const STACK_COLUMNS_MEDIA_QUERY = "(max-width: 1100px), (orientation: portrait)";
+
+const PRIORITY_COLORS = {
+  H: "#ef4444",
+  M: "#f59e0b",
+  L: "#22c55e",
+};
+
+const PRIORITY_RANK = {
+  H: 3,
+  M: 2,
+  L: 1,
+};
+
+function parseISODateString(value) {
+  if (!value) return null;
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    return new Date(value.getFullYear(), value.getMonth(), value.getDate());
+  }
+
+  if (typeof value === "string") {
+    const [year, month, day] = value.split("-").map(Number);
+    if (!year || !month || !day) return null;
+    const parsed = new Date(year, month - 1, day);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  }
+
+  return null;
+}
+
+function formatISODateString(value) {
+  if (!value) return null;
+  const date = parseISODateString(value);
+  if (!date) return null;
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function getDateKey(value) {
+  return formatISODateString(value);
+}
 
 function PriorityTemplate(option) {
   if (!option) return null;
@@ -112,6 +155,10 @@ function TaskCard({ task, onEdit, onDelete, onDragStart, onDragEnd, onDrop, isDr
     }).format(date);
   };
 
+  const fromDateLabel = task.from_date ? formatDate(task.from_date) : "--/--/--";
+  const dueDateLabel = task.due_date ? formatDate(task.due_date) : "--/--/--";
+  const createdDateLabel = task.created_date ? formatDate(task.created_date) : "--/--/--";
+
   return (
     <div
       draggable
@@ -138,14 +185,24 @@ function TaskCard({ task, onEdit, onDelete, onDragStart, onDragEnd, onDrop, isDr
         if (onDrop) onDrop(e);
       }}
     >
-      {/* Top row: Date, Priority, Menu */}
+      {/* Top row: Created/From/Due dates, Priority, Menu */}
       <div
         style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.75rem", flexWrap: "nowrap" }}
       >
-        {/* Date - left */}
+        {/* Created / From / Due dates - left */}
         <div style={{ fontSize: "0.75rem", color: "var(--text-color-secondary)", display: "flex", alignItems: "center", gap: "0.35rem", flexShrink: 0, whiteSpace: "nowrap" }}>
           <i className="pi pi-calendar" style={{ fontSize: "0.7rem" }} />
-          <span>{formatDate(task.created_date)}</span>
+          <span>
+            <strong>Created:</strong> {createdDateLabel}
+          </span>
+          <span style={{ opacity: 0.7 }}>|</span>
+          <span>
+            <strong>From:</strong> {fromDateLabel}
+          </span>
+          <span style={{ opacity: 0.7 }}>|</span>
+          <span>
+            <strong>Due:</strong> {dueDateLabel}
+          </span>
         </div>
 
         {/* Spacer */}
@@ -419,6 +476,241 @@ function KanbanColumn({
   );
 }
 
+function CalendarColumn({ tasks, stackOnMobilePortrait = false }) {
+  const [viewDate, setViewDate] = useState(() => {
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth(), 1);
+  });
+
+  const monthDays = useMemo(() => {
+    const start = new Date(viewDate.getFullYear(), viewDate.getMonth(), 1);
+    const end = new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 0);
+    const leadingBlanks = start.getDay();
+    const cells = [];
+
+    for (let i = 0; i < leadingBlanks; i += 1) {
+      cells.push(null);
+    }
+
+    for (let day = 1; day <= end.getDate(); day += 1) {
+      cells.push(new Date(viewDate.getFullYear(), viewDate.getMonth(), day));
+    }
+
+    while (cells.length % 7 !== 0) {
+      cells.push(null);
+    }
+
+    return cells;
+  }, [viewDate]);
+
+  const eventsByDate = useMemo(() => {
+    const map = new Map();
+
+    for (const task of tasks) {
+      const fromDate = parseISODateString(task.from_date);
+      const dueDate = parseISODateString(task.due_date);
+
+      if (fromDate && dueDate) {
+        const start = fromDate.getTime() <= dueDate.getTime() ? fromDate : dueDate;
+        const end = fromDate.getTime() <= dueDate.getTime() ? dueDate : fromDate;
+
+        for (
+          let day = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+          day.getTime() <= end.getTime();
+          day.setDate(day.getDate() + 1)
+        ) {
+          const key = getDateKey(day);
+          const existing = map.get(key) ?? { linePriority: null, dotPriority: null };
+
+          if (
+            !existing.linePriority ||
+            PRIORITY_RANK[task.priority] > PRIORITY_RANK[existing.linePriority]
+          ) {
+            existing.linePriority = task.priority;
+          }
+
+          map.set(key, existing);
+        }
+      } else if (!fromDate && dueDate) {
+        const key = getDateKey(dueDate);
+        const existing = map.get(key) ?? { linePriority: null, dotPriority: null };
+
+        if (
+          !existing.dotPriority ||
+          PRIORITY_RANK[task.priority] > PRIORITY_RANK[existing.dotPriority]
+        ) {
+          existing.dotPriority = task.priority;
+        }
+
+        map.set(key, existing);
+      }
+    }
+
+    return map;
+  }, [tasks]);
+
+  const weekDayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+  const goToCurrentMonth = () => {
+    const now = new Date();
+    setViewDate(new Date(now.getFullYear(), now.getMonth(), 1));
+  };
+
+  return (
+    <div
+      className="surface-card border-round-xl surface-border"
+      style={{
+        width: stackOnMobilePortrait ? "100%" : "min(560px, calc((100vw - 6rem) / 2))",
+        minWidth: stackOnMobilePortrait ? "100%" : "360px",
+        maxWidth: stackOnMobilePortrait ? "100%" : "600px",
+        flex: stackOnMobilePortrait ? "1 1 100%" : "1 1 360px",
+        height: "450px",
+        backgroundColor: "var(--surface-card)",
+        border: "2px solid var(--surface-border)",
+        borderRadius: "16px",
+        padding: "1.25rem",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
+      <div className="mb-3" style={{ display: "flex", justifyContent: "center" }}>
+        <span className="text-lg" style={{ fontWeight: 800 }}>Calendar</span>
+      </div>
+
+      <div
+        className="mb-2"
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: "0.5rem",
+        }}
+      >
+          <Button
+            icon="pi pi-angle-left"
+            text
+            rounded
+            style={{ width: "2rem", height: "2rem" }}
+            onClick={() =>
+              setViewDate(
+                (prev) => new Date(prev.getFullYear(), prev.getMonth() - 1, 1)
+              )
+            }
+          />
+          <span
+            style={{
+              minWidth: "10rem",
+              height: "2rem",
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              textAlign: "center",
+              fontWeight: 700,
+              lineHeight: 1,
+            }}
+          >
+            {new Intl.DateTimeFormat("en-US", { month: "long", year: "numeric" }).format(viewDate)}
+          </span>
+          <Button
+            icon="pi pi-angle-right"
+            text
+            rounded
+            style={{ width: "2rem", height: "2rem" }}
+            onClick={() =>
+              setViewDate(
+                (prev) => new Date(prev.getFullYear(), prev.getMonth() + 1, 1)
+              )
+            }
+          />
+      </div>
+
+      <div className="mb-2" style={{ display: "flex", justifyContent: "center" }}>
+        <Button
+          icon="pi pi-refresh"
+          label="Current Month"
+          text
+          onClick={goToCurrentMonth}
+        />
+      </div>
+
+      <Divider style={{ margin: "0.4rem 0 0.7rem 0" }} />
+
+      <div style={{ flex: 1 }}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(7, minmax(0, 1fr))",
+            gap: "0.25rem",
+            marginBottom: "0.35rem",
+          }}
+        >
+          {weekDayLabels.map((label) => (
+            <div
+              key={label}
+              style={{
+                fontSize: "0.75rem",
+                opacity: 0.7,
+                textAlign: "center",
+                fontWeight: 700,
+              }}
+            >
+              {label}
+            </div>
+          ))}
+        </div>
+
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(7, minmax(0, 1fr))",
+            gap: "0.25rem",
+          }}
+        >
+          {monthDays.map((day, index) => {
+            if (!day) {
+              return (
+                <div
+                  key={`empty-${index}`}
+                  style={{ height: "2.2rem", borderRadius: "8px" }}
+                />
+              );
+            }
+
+            const key = getDateKey(day);
+            const event = eventsByDate.get(key);
+            const fillPriority = [event?.linePriority, event?.dotPriority]
+              .filter(Boolean)
+              .sort((a, b) => PRIORITY_RANK[b] - PRIORITY_RANK[a])[0];
+            const fillColor = fillPriority ? PRIORITY_COLORS[fillPriority] : null;
+            const textColor = fillColor ? "#ffffff" : "var(--text-color)";
+
+            return (
+              <div
+                key={key}
+                style={{
+                  position: "relative",
+                  height: "2.2rem",
+                  borderRadius: "8px",
+                  border: fillColor ? `1px solid ${fillColor}` : "1px solid var(--surface-border)",
+                  backgroundColor: fillColor || "transparent",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  overflow: "hidden",
+                }}
+              >
+                <span style={{ position: "relative", zIndex: 1, fontWeight: 700, color: textColor }}>
+                  {day.getDate()}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* =========================
    HOME
 ========================= */
@@ -440,6 +732,8 @@ export default function Home() {
     name: "",
     description: "",
     priority: "M",
+    from_date: null,
+    due_date: null,
   });
 
   const [createVisible, setCreateVisible] = useState(false);
@@ -447,6 +741,8 @@ export default function Home() {
     name: "",
     description: "",
     priority: "L",
+    from_date: null,
+    due_date: null,
   });
 
   const [todoFilter, setTodoFilter] = useState(["H", "M", "L"]);
@@ -609,13 +905,40 @@ export default function Home() {
     }
   };
 
+  const validateDateRule = (formData) => {
+    const fromDate = parseISODateString(formData.from_date);
+    const dueDate = parseISODateString(formData.due_date);
+
+    if (fromDate && !dueDate) {
+      toast.current?.show({
+        severity: "warn",
+        summary: "Due date is required when from date is set",
+      });
+      return false;
+    }
+
+    if (fromDate && dueDate && fromDate.getTime() > dueDate.getTime()) {
+      toast.current?.show({
+        severity: "warn",
+        summary: "From date cannot be after due date",
+      });
+      return false;
+    }
+
+    return true;
+  };
+
   /* =========================
      EDIT
   ========================= */
 
   const openEdit = (task) => {
     setEditingTask(task);
-    setEditForm(task);
+    setEditForm({
+      ...task,
+      from_date: parseISODateString(task.from_date),
+      due_date: parseISODateString(task.due_date),
+    });
     setEditVisible(true);
   };
 
@@ -628,10 +951,21 @@ export default function Home() {
       return;
     }
 
-    await consumer.updateTask(editingTask.id, editForm);
+    if (!validateDateRule(editForm)) {
+      return;
+    }
+
+    const payload = {
+      ...editingTask,
+      ...editForm,
+      from_date: formatISODateString(editForm.from_date),
+      due_date: formatISODateString(editForm.due_date),
+    };
+
+    await consumer.updateTask(editingTask.id, payload);
     setTasks((prev) =>
       prev.map((t) =>
-        t.id === editingTask.id ? editForm : t
+        t.id === editingTask.id ? { ...t, ...payload } : t
       )
     );
     setEditVisible(false);
@@ -651,15 +985,35 @@ export default function Home() {
   ========================= */
 
   const openCreate = () => {
-    setCreateForm({ name: "", description: "", priority: "L" });
+    setCreateForm({
+      name: "",
+      description: "",
+      priority: "L",
+      from_date: null,
+      due_date: null,
+    });
     setCreateVisible(true);
   };
 
   const handleCreate = async () => {
+    if (!createForm.name.trim()) {
+      toast.current?.show({
+        severity: "warn",
+        summary: "Name is required",
+      });
+      return;
+    }
+
+    if (!validateDateRule(createForm)) {
+      return;
+    }
+
     const payload = {
       ...createForm,
       priority: createForm.priority || "L",
       status: false,
+      from_date: formatISODateString(createForm.from_date),
+      due_date: formatISODateString(createForm.due_date),
     };
 
     const created = await consumer.createTask(payload);
@@ -770,6 +1124,10 @@ export default function Home() {
             loading={loading}
             stackOnMobilePortrait={stackOnMobilePortrait}
           />
+          <CalendarColumn
+            tasks={tasks}
+            stackOnMobilePortrait={stackOnMobilePortrait}
+          />
         </div>
       )}
 
@@ -815,6 +1173,30 @@ export default function Home() {
             }
             itemTemplate={PriorityTemplate}
             valueTemplate={PriorityTemplate}
+          />
+          <Calendar
+            value={editForm.from_date}
+            onChange={(e) =>
+              setEditForm({
+                ...editForm,
+                from_date: e.value,
+              })
+            }
+            dateFormat="yy-mm-dd"
+            showIcon
+            placeholder="From Date (optional)"
+          />
+          <Calendar
+            value={editForm.due_date}
+            onChange={(e) =>
+              setEditForm({
+                ...editForm,
+                due_date: e.value,
+              })
+            }
+            dateFormat="yy-mm-dd"
+            showIcon
+            placeholder="Due Date (optional)"
           />
           <Button label="Save" onClick={handleSave} />
         </div>
@@ -862,6 +1244,30 @@ export default function Home() {
             }
             itemTemplate={PriorityTemplate}
             valueTemplate={PriorityTemplate}
+          />
+          <Calendar
+            value={createForm.from_date}
+            onChange={(e) =>
+              setCreateForm({
+                ...createForm,
+                from_date: e.value,
+              })
+            }
+            dateFormat="yy-mm-dd"
+            showIcon
+            placeholder="From Date (optional)"
+          />
+          <Calendar
+            value={createForm.due_date}
+            onChange={(e) =>
+              setCreateForm({
+                ...createForm,
+                due_date: e.value,
+              })
+            }
+            dateFormat="yy-mm-dd"
+            showIcon
+            placeholder="Due Date (optional)"
           />
           <Button label="Create" onClick={handleCreate} />
         </div>

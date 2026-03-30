@@ -7,7 +7,7 @@ export default class TaskRepository {
     async create(task) {
         const rows = await db.queryFromFile(
             "backend/src/infrastructure/databases/queries/crud/createTask.sql",
-            [task.name, task.created_date, task.priority, task.description, task.status]
+            [task.name, task.created_date, task.priority, task.description, task.status, task.from_date, task.due_date]
         );
 
         if (!rows || rows.length === 0) {
@@ -22,7 +22,9 @@ export default class TaskRepository {
             row.created_date,
             row.priority,
             row.description,
-            row.status
+            row.status,
+            row.from_date,
+            row.due_date
         );
     }
 
@@ -44,14 +46,16 @@ export default class TaskRepository {
             row.created_date,
             row.priority,
             row.description,
-            row.status
+            row.status,
+            row.from_date,
+            row.due_date
         );
     }
 
     async update(task) {
         const rows = await db.queryFromFile(
             "backend/src/infrastructure/databases/queries/crud/updateTask.sql",
-            [task.id, task.name, task.priority, task.description, task.status]
+            [task.id, task.name, task.priority, task.description, task.status, task.from_date, task.due_date]
         );
 
         if (!rows || rows.length === 0) {
@@ -66,7 +70,9 @@ export default class TaskRepository {
             row.created_date,
             row.priority,
             row.description,
-            row.status
+            row.status,
+            row.from_date,
+            row.due_date
         );
     }
 
@@ -88,7 +94,9 @@ export default class TaskRepository {
             row.created_date,
             row.priority,
             row.description,
-            row.status
+            row.status,
+            row.from_date,
+            row.due_date
         );
     }
 
@@ -105,7 +113,9 @@ export default class TaskRepository {
                     row.created_date,
                     row.priority,
                     row.description,
-                    row.status
+                    row.status,
+                    row.from_date,
+                    row.due_date
                 )
         );
     }
