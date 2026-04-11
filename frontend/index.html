@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ToDoJS</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&display=swap"
+    />
+
+    <style>
+      /* Hide content until CSS is loaded */
+      html {
+        opacity: 0;
+      }
+      
+      html.css-loaded {
+        transition: opacity 0.15s ease-in;
+        opacity: 1;
+      }
+      
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: 'JetBrains Mono', monospace;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+      
+      #root {
+        min-height: 100vh;
+      }
+    </style>
+
+    <link rel="stylesheet" id="theme-link" href="" />
+
+    <script>
+      (function () {
+        let savedTheme = "light";
+        try {
+          savedTheme = localStorage.getItem("theme") || "light";
+        } catch (_) {
+          savedTheme = "light";
+        }
+
+        const themeHref =
+          savedTheme === "dark"
+            ? "/src/presentation/assets/theme-dark.css"
+            : "/src/presentation/assets/theme-light.css";
+
+        const themeLink = document.getElementById("theme-link");
+        themeLink.setAttribute("href", themeHref);
+
+        const stylesheetIds = ["theme-link"];
+        const links = stylesheetIds
+          .map((id) => document.getElementById(id))
+          .filter(Boolean);
+
+        let pending = links.length;
+        let revealed = false;
+        const revealPage = () => {
+          if (revealed) return;
+          revealed = true;
+          document.documentElement.classList.add("css-loaded");
+        };
+
+        const onDone = () => {
+          pending -= 1;
+          if (pending <= 0) {
+            revealPage();
+          }
+        };
+
+        links.forEach((link) => {
+          link.addEventListener("load", onDone, { once: true });
+          link.addEventListener("error", onDone, { once: true });
+        });
+
+        // Fallback for cached or already-loaded stylesheets.
+        window.addEventListener("load", revealPage, { once: true });
+        // Emergency fallback: never keep screen hidden indefinitely.
+        setTimeout(revealPage, 2000);
+
+        if (pending === 0) {
+          revealPage();
+        }
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
