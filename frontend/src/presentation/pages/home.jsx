@@ -138,7 +138,7 @@ function SkeletonTaskCard() {
   );
 }
 
-function TaskCard({ task, onEdit, onDelete, onDragStart, onDragEnd, onDrop, isDragging }) {
+function TaskCard({ task, onEdit, onDelete, onDragStart, onDragEnd, onDrop, isDragging, onStatusChange }) {
   const priority = PRIORITY_CONFIG[task.priority] ?? PRIORITY_CONFIG.M;
 
   // Format date from YYYY-MM-DD to DD/MM/YY format
@@ -299,6 +299,19 @@ function TaskCard({ task, onEdit, onDelete, onDragStart, onDragEnd, onDrop, isDr
         style={{ marginTop: "0.25rem" }}
       >
         <Button
+          icon={task.status ? "pi pi-undo" : "pi pi-check"}
+          text
+          rounded
+          severity={task.status ? "warning" : "success"}
+          onClick={() => onStatusChange(task)}
+          title={task.status ? "Move to To Do" : "Mark as Completed"}
+          style={{
+            padding: 0,
+            width: "1.8rem",
+            height: "1.8rem",
+          }}
+        />
+        <Button
           icon="pi pi-trash"
           text
           rounded
@@ -337,6 +350,7 @@ function KanbanColumn({
   draggedTaskId,
   loading = false,
   stackOnMobilePortrait = false,
+  onStatusChange,
 }) {
   const [dragOver, setDragOver] = useState(false);
 
@@ -487,6 +501,7 @@ function KanbanColumn({
               isDragging={draggedTaskId === task.id}
               onEdit={onEdit}
               onDelete={onDelete}
+              onStatusChange={onStatusChange}
               onDragStart={onDragStart}
               onDragEnd={onDragEnd}
               onDrop={
@@ -746,6 +761,11 @@ function CalendarColumn({ tasks, stackOnMobilePortrait = false }) {
             const textColor = fillColor ? "#ffffff" : "var(--text-color)";
             const isSelected = selectedDate?.getTime() === day.getTime();
 
+            const today = new Date();
+            const isToday = day.getFullYear() === today.getFullYear() &&
+                           day.getMonth() === today.getMonth() &&
+                           day.getDate() === today.getDate();
+
             return (
               <div
                 key={key}
@@ -758,15 +778,23 @@ function CalendarColumn({ tasks, stackOnMobilePortrait = false }) {
                   position: "relative",
                   height: "2.2rem",
                   borderRadius: "8px",
-                  border: fillColor ? `1px solid ${fillColor}` : "1px solid var(--surface-border)",
+                  border: isToday
+                    ? "2px solid var(--primary-color)"
+                    : fillColor
+                    ? `1px solid ${fillColor}`
+                    : "1px solid var(--surface-border)",
                   backgroundColor: fillColor || "transparent",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                   overflow: "hidden",
                   cursor: "pointer",
-                  boxShadow: isSelected ? "inset 0 0 0 2px var(--primary-color)" : "none",
-                  transform: isSelected ? "translateY(-1px)" : "none",
+                  boxShadow: isSelected
+                    ? "inset 0 0 0 2px var(--primary-color)"
+                    : isToday
+                    ? "0 0 0 3px rgba(var(--primary-500), 0.3)"
+                    : "none",
+                  transform: isSelected ? "translateY(-1px)" : isToday ? "scale(1.05)" : "scale(1)",
                   transition: "transform 0.12s ease, box-shadow 0.12s ease",
                 }}
               >
@@ -1114,6 +1142,22 @@ export default function Home() {
   };
 
   /* =========================
+     STATUS CHANGE
+  ========================= */
+
+  const handleStatusChange = async (task) => {
+    const updatedStatus = !task.status;
+    const updatedTask = { ...task, status: updatedStatus };
+
+    await consumer.updateTask(task.id, updatedTask);
+    setTasks((prev) =>
+      prev.map((t) =>
+        t.id === task.id ? updatedTask : t
+      )
+    );
+  };
+
+  /* =========================
      CREATE
   ========================= */
 
@@ -1233,6 +1277,7 @@ export default function Home() {
             columnStatus={false}
             onEdit={openEdit}
             onDelete={handleDelete}
+            onStatusChange={handleStatusChange}
             onDrop={handleDrop}
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
@@ -1250,6 +1295,7 @@ export default function Home() {
             columnStatus={true}
             onEdit={openEdit}
             onDelete={handleDelete}
+            onStatusChange={handleStatusChange}
             onDrop={handleDrop}
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
